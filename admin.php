@@ -11,9 +11,9 @@ if (!isset($_SESSION['username'])) {
 // Get the user's email from the session
 $userName = $_SESSION['username'];
 $userEmail = $_SESSION['useremail'];
-$department = $_SESSION['dept'];
+$logdept = $_SESSION['dept'];
 
-if ($department !== 'ADMIN') {
+if ($logdept !== 'ADMIN') {
     // Redirect to dept.php with an alert prompt
     echo "<script>
             alert('You are not an admin');
@@ -26,8 +26,15 @@ if ($department !== 'ADMIN') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Get the JSON data sent from the frontend
     $requestData = json_decode(file_get_contents('php://input'), true);
-    $date = $requestData['date'];
-    $department = $requestData['department'];
+    $fromDate = $requestData['fromDate'];
+    $toDate = $requestData['toDate'];
+    $selectedDept = $requestData['selectedDept'];
+
+    // Validate the input data
+    if (!$fromDate || !$toDate || !$selectedDept) {
+        echo json_encode(['error' => 'Invalid input data']);
+        exit();
+    }
 
     // Map departments to their corresponding table names
     $tableMapping = [
@@ -42,44 +49,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'ALL' => 'power_table'
     ];
 
-    if (!isset($tableMapping[$department])) {
+    if (!isset($tableMapping[$selectedDept])) {
         echo json_encode(['error' => 'Invalid department selected']);
         exit();
     }
 
-    $tableName = $tableMapping[$department];
+    $tableName = $tableMapping[$selectedDept];
 
     // Connect to MySQL database
     $conn = new mysqli('localhost', 'root', '', 'powerdb', 3306); // Adjust as per your database details
 
     // Check connection
     if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+        echo json_encode(['error' => 'Database connection failed: ' . $conn->connect_error]);
+        exit();
     }
 
-    $updationQuery="UPDATE power_table
-    SET 
-        LOAD_SECH_SMS_TOTAL = LOAD_SECH_SMS2 + LOAD_SECH_SMS3,
-        TOTAL = LOAD_SECH_SMS2 + LOAD_SECH_SMS3 + LOAD_SECH_RAILMILL + LOAD_SECH_PLATEMILL + LOAD_SECH_SPM + LOAD_SECH_NSPL";
-    if($conn->query($updationQuery)===TRUE){
-        //echo 'done totaling'
+    $updationQuery = "UPDATE power_table
+        SET 
+            LOAD_SECH_SMS_TOTAL = LOAD_SECH_SMS2 + LOAD_SECH_SMS3,
+            TOTAL = LOAD_SECH_SMS2 + LOAD_SECH_SMS3 + LOAD_SECH_RAILMILL + LOAD_SECH_PLATEMILL + LOAD_SECH_SPM + LOAD_SECH_NSPL";
+    if (!$conn->query($updationQuery)) {
+        echo json_encode(['error' => 'Failed to update totals: ' . $conn->error]);
+        exit();
     }
+
     // Determine the columns to query based on department
-    if ($department === 'ALL') {
+    if ($selectedDept === 'ALL') {
         $columns = ['TIME', 'DATE', 'POWER_GENERATION', 'LOAD_SECH_SMS2', 'LOAD_SECH_SMS3', 'LOAD_SECH_SMS_TOTAL', 'LOAD_SECH_RAILMILL', 'LOAD_SECH_PLATEMILL', 'LOAD_SECH_SPM', 'LOAD_SECH_NSPL', 'TOTAL'];
-    } elseif ($department === 'JLDC') {
+    } elseif ($selectedDept === 'JLDC') {
         $columns = ['TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
-    }   else if ($department==='SMS'){
-        $columns = ['TIME', 'DATE', 'LOADSECH_SMS2','LOADSECH_SMS3', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+    } elseif ($selectedDept === 'SMS') {
+        $columns = ['TIME', 'DATE', 'LOADSECH_SMS2', 'LOADSECH_SMS3', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
     } else {
         $columns = ['TIME', 'DATE', 'LOADSECH', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
     }
+
     // Prepare and execute the query
     $columnString = implode(", ", $columns);
-    $stmt = $conn->prepare("SELECT $columnString FROM $tableName WHERE DATE = ?");
-    $stmt->bind_param("s", $date);
-    $stmt->execute();
+    $stmt = $conn->prepare("SELECT $columnString FROM $tableName WHERE DATE BETWEEN ? AND ?");
+    if ($stmt === false) {
+        echo json_encode(['error' => 'Failed to prepare statement: ' . $conn->error]);
+        exit();
+    }
+
+    $stmt->bind_param("ss", $fromDate, $toDate);
+    if (!$stmt->execute()) {
+        echo json_encode(['error' => 'Failed to execute query: ' . $stmt->error]);
+        exit();
+    }
+
     $result = $stmt->get_result();
+    if ($result === false) {
+        echo json_encode(['error' => 'Failed to get result: ' . $stmt->error]);
+        exit();
+    }
 
     // Fetch data and send it back as JSON
     $data = [];
@@ -94,6 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $conn->close();
     exit(); // Stop further execution after handling the AJAX request
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -158,13 +183,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <!-- Date selection and search button for Option 1 -->
             <div class="row align-items-end" id="option1Section">
-                <div class="col-md-3">
-                    <label for="sheetDate" class="form-label">Select Sheet Date:</label>
-                    <input type="date" class="form-control" id="sheetDate" required>
+                <div class="col-md-2">
+                    <label for="fromDate" class="form-label"><b>From Date:</b></label>
+                    <input type="date" class="form-control" id="fromDate" required>
                 </div>
-                <div class="col-md-3">
-                    <label for="department" class="form-label">Select Department:</label>
-                    <select name="department" id="department" class="form-control " required>
+                <div class="col-md-2">
+                    <label for="toDate" class="form-label"><b>To Date:</b></label>
+                    <input type="date" class="form-control" id="toDate" required>
+                </div>
+                <div class="col-md-2">
+                    <label for="selectedDept" class="form-label"><b>Department:</b></label>
+                    <select name="department" id="selectedDept" class="form-control " required>
                         <option value="ALL">All Departments</option>
                         <option value="SMS">SMS</option>
                         <option value="SMS2">SMS2</option>
@@ -176,9 +205,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <option value="JLDC">JLDC</option>
                     </select>
                 </div>
-                <div class="col-md-3"></div>
-                <div class="btn-group col-md-3">
-                    <button type="button" class="btn btn-primary" id="searchBtn"><i class="fa fa-search"></i> Search</button>
+                <div class="col-md-2"></div>
+                <div class="btn-group col-md-4">
+                    <button type="button" class="btn btn-primary" id="searchBtn"><i class="fa fa-search"></i></button>
                     <button type="button" class="btn btn-dark" id="exportBtn"> <i class="fa fa-file-excel-o" aria-hidden="true"></i>Export to Excel </button>
                 </div>
                 <div class="card" id="myTable" style="padding: 20px; height:61vh; overflow-y: auto; margin-top:20px;">
@@ -214,83 +243,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Handle click on Search button
         document.getElementById('searchBtn').addEventListener('click', function() {
-            var sheetDate = document.getElementById('sheetDate').value; // Get selected sheet date
-            var department = document.getElementById('department').value; // Get selected department
+    var fromDate = document.getElementById('fromDate').value;
+    var toDate = document.getElementById('toDate').value;
+    var selectedDept = document.getElementById('selectedDept').value;
 
-            if (!sheetDate) {
-                alert('Please select a sheet date.');
-                return;
-            }
+    if (!fromDate || !toDate) {
+        alert('Select both From Date and To Date.');
+        return;
+    }
+    if (fromDate > toDate) {
+        alert('From Date should be before To Date.');
+        return;
+    }
 
-            if (!department) {
-                alert('Please select a department.');
-                return;
-            }
+    fetch('admin.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fromDate: fromDate, toDate: toDate, selectedDept: selectedDept })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
 
-            // Send AJAX request to fetch data
-            fetch('admin.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ date: sheetDate, department: department })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                    return;
-                }
+        // Create a table to display the data
+        var table = document.createElement('table');
+        table.classList.add('table', 'table-striped');
 
-                // Create a table to display the data
-                var table = document.createElement('table');
-                table.classList.add('table', 'table-striped');
+        // Create table headers
+        var thead = document.createElement('thead');
+        var headerRow = document.createElement('tr');
+        var columns;
+        if (selectedDept === 'ALL') {
+            columns = ['TIME', 'DATE', 'POWER_GENERATION', 'LOAD_SECH_SMS2', 'LOAD_SECH_SMS3', 'LOAD_SECH_SMS_TOTAL', 'LOAD_SECH_RAILMILL', 'LOAD_SECH_PLATEMILL', 'LOAD_SECH_SPM', 'LOAD_SECH_NSPL', 'TOTAL'];
+        } else if (selectedDept === 'JLDC') {
+            columns = ['TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+        } else if (selectedDept === 'SMS') {
+            columns = ['TIME', 'DATE', 'LOADSECH_SMS2', 'LOADSECH_SMS3', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+        } else {
+            columns = ['TIME', 'DATE', 'LOADSECH', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+        }
 
-                // Create table headers
-                var thead = document.createElement('thead');
-                var headerRow = document.createElement('tr');
-                var columns;
-                if (department === 'ALL') {
-                    columns = ['TIME', 'DATE', 'POWER_GENERATION', 'LOAD_SECH_SMS2', 'LOAD_SECH_SMS3', 'LOAD_SECH_SMS_TOTAL', 'LOAD_SECH_RAILMILL', 'LOAD_SECH_PLATEMILL', 'LOAD_SECH_SPM', 'LOAD_SECH_NSPL', 'TOTAL'];
-                } else if (department === 'JLDC') {
-                    columns = ['TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
-                } else if (department === 'SMS') {
-                    columns = ['TIME', 'DATE', 'LOADSECH_SMS2','LOADSECH_SMS3', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
-                } else {
-                    columns = ['TIME', 'DATE', 'LOADSECH', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
-                }
-
-                columns.forEach(col => {
-                    var th = document.createElement('th');
-                    th.textContent = col;
-                    headerRow.appendChild(th);
-                });
-                thead.appendChild(headerRow);
-                table.appendChild(thead);
-
-                // Create table body
-                var tbody = document.createElement('tbody');
-                data.forEach(row => {
-                    var tr = document.createElement('tr');
-                    columns.forEach(col => {
-                        var td = document.createElement('td');
-                        td.textContent = row[col];
-                        tr.appendChild(td);
-                    });
-                    tbody.appendChild(tr);
-                });
-                table.appendChild(tbody);
-
-                // Clear previous table data and append new table
-                var tableContainer = document.getElementById('myTable');
-                tableContainer.innerHTML = '';
-                tableContainer.appendChild(table);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error fetching data from database!');
-            });
+        columns.forEach(col => {
+            var th = document.createElement('th');
+            th.textContent = col;
+            headerRow.appendChild(th);
         });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        // Create table body
+        var tbody = document.createElement('tbody');
+        data.forEach(row => {
+            var tr = document.createElement('tr');
+            columns.forEach(col => {
+                var td = document.createElement('td');
+                td.textContent = row[col];
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+
+        // Clear previous table data and append new table
+        var tableContainer = document.getElementById('myTable');
+        tableContainer.innerHTML = '';
+        tableContainer.appendChild(table);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error fetching data from database!');
+    });
+});
+
     </script>
 </body>
 
