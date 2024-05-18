@@ -21,11 +21,11 @@ if ($department == 'ADMIN') {
     exit();
 }
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Get the JSON data sent from the frontend
     $requestData = json_decode(file_get_contents('php://input'), true);
-    $date = $requestData['date'];
+    $fromDate = $requestData['fromDate'];
+    $toDate = $requestData['toDate'];
 
     $tableMapping = [
         'SMS' => 'sms',
@@ -54,33 +54,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($department === 'JLDC') {
         $columns = ['TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
-    }   else if ($department==='SMS'){
+    } else if ($department === 'SMS') {
         $columns = ['TIME', 'DATE', 'LOADSECH_SMS2','LOADSECH_SMS3', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
     } else {
         $columns = ['TIME', 'DATE', 'LOADSECH', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
     }
-        // Prepare and execute the query
-        $columnString = implode(", ", $columns);
-        $stmt = $conn->prepare("SELECT $columnString FROM $tableName WHERE DATE = ?");
-        $stmt->bind_param("s", $date);
-        $stmt->execute();
-        $result = $stmt->get_result();
-    
-        // Fetch data and send it back as JSON
-        $data = [];
-        while ($row = $result->fetch_assoc()) {
-            $data[] = $row;
-        }
-    
-        echo json_encode($data);
-    
-        // Close database connection
-        $stmt->close();
-        $conn->close();
-        exit(); // Stop further execution after handling the AJAX request
-    }
-    ?>
 
+    // Prepare and execute the query
+    $columnString = implode(", ", $columns);
+    $stmt = $conn->prepare("SELECT $columnString FROM $tableName WHERE DATE BETWEEN ? AND ?");
+    $stmt->bind_param("ss", $fromDate, $toDate);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    // Fetch data and send it back as JSON
+    $data = [];
+    while ($row = $result->fetch_assoc()) {
+        $data[] = $row;
+    }
+
+    echo json_encode($data);
+
+    // Close database connection
+    $stmt->close();
+    $conn->close();
+    exit(); // Stop further execution after handling the AJAX request
+}
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -142,11 +142,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="row align-items-end" id="option1Section">
                 <div class="col-md-3">
-                    <label for="sheetDate" class="form-label">Select Sheet Date:</label>
-                    <input type="date" class="form-control" id="sheetDate" required>
+                    <label for="fromDate" class="form-label"><b>From Date:</b></label>
+                    <input type="date" class="form-control" id="fromDate" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="toDate" class="form-label"><b>To Date:</b></label>
+                    <input type="date" class="form-control" id="toDate" required>
                 </div>
                 <div class="btn-group col-md-3">
-                    <button type="button" class="btn btn-primary mt-4" id="searchBtn"><i class="fa fa-search"></i>Search</button>
+                    <button type="button" class="btn btn-primary mt-4" id="searchBtn"><i class="fa fa-search"></i></button>
                     <button type="button" class="btn btn-dark mt-4" id="exportBtn"><i class="fa fa-file-excel-o" aria-hidden="true"></i>Export to Excel </button>
                 </div>                
                 <div class="card" id="myTable" style="padding: 20px; height:61vh; overflow-y: auto; margin-top:20px;">
@@ -159,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
-                document.getElementById('updateDeptBTN').addEventListener('click', function() {
+        document.getElementById('updateDeptBTN').addEventListener('click', function() {
             // Redirect to updateadmin.php page
             window.location.href = 'dept.php';
         });
@@ -178,73 +182,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             XLSX.writeFile(wb, 'exported_data.xlsx');
         });
 
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            var fromDate = document.getElementById('fromDate').value;
+            var toDate = document.getElementById('toDate').value;
 
-        document.getElementById('searchBtn').addEventListener('click',function(){
-            var sheetDate = document.getElementById('sheetDate').value;
-            
-            if (!sheetDate) {
-                alert('Please select a sheet date.');
+            if (!fromDate || !toDate) {
+                alert('Please select both from and to dates.');
                 return;
             }
+            if (fromDate>toDate){
+                alert('from date should be before to date');
+                return
+            }
+            fetch('depttable.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ fromDate: fromDate, toDate: toDate })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
 
-            fetch('depttable.php',{method:'POST', headers:{
-                'Content-Type':'application/json'
-            },
-        body:JSON.stringify({date:sheetDate})
-    })
-    .then(response=>response.json())
-    .then(data=>{
-        if(data.error){
-            alert(data.error);
-            return;
-        }
+                var table = document.createElement('table');
+                table.classList.add('table', 'table-striped');
 
-        var table=document.createElement('table');
-        table.classList.add('table','table-striped');
+                // table headers
+                var thead = document.createElement('thead');
+                var headerRow = document.createElement('tr');
+                var department = '<?php echo $department; ?>';
+                var columns;
+                if (department === 'JLDC') {
+                    columns = ['TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+                } else if (department === 'SMS') {
+                    columns = ['TIME', 'DATE', 'LOADSECH_SMS2','LOADSECH_SMS3', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+                } else {
+                    columns = ['TIME', 'DATE', 'LOADSECH', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+                }
+                columns.forEach(col => {
+                    var th = document.createElement('th');
+                    th.textContent = col;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
 
-        //table headers
-        var thead = document.createElement('thead');
-        var headerRow = document.createElement('tr');
-        var department = '<?php echo $department; ?>';
-        var columns;
-        if (department === 'JLDC') {
-            columns = ['TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
-        } else if (department === 'SMS') {
-            columns = ['TIME', 'DATE', 'LOADSECH_SMS2','LOADSECH_SMS3', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
-        } else {
-            columns = ['TIME', 'DATE', 'LOADSECH', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
-        }
-        columns.forEach(col => {
-            var th = document.createElement('th');
-            th.textContent = col;
-            headerRow.appendChild(th);
-        });
-        thead.appendChild(headerRow);
-        table.appendChild(thead);
+                // table body
+                var tbody = document.createElement('tbody');
+                data.forEach(row => {
+                    var tr = document.createElement('tr');
+                    columns.forEach(col => {
+                        var td = document.createElement('td');
+                        td.textContent = row[col];
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
 
-        //table body
-        var tbody=document.createElement('tbody');
-        data.forEach(row => {
-            var tr = document.createElement('tr');
-            columns.forEach(col => {
-                var td = document.createElement('td');
-                td.textContent = row[col];
-                tr.appendChild(td);
+                // Clear previous table data and append new table
+                var tableContainer = document.getElementById('myTable');
+                tableContainer.innerHTML = '';
+                tableContainer.appendChild(table);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error fetching data from database!');
             });
-            tbody.appendChild(tr);
         });
-        table.appendChild(tbody);  
-        
-        // Clear previous table data and append new table
-        var tableContainer = document.getElementById('myTable');
-        tableContainer.innerHTML = '';
-        tableContainer.appendChild(table);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error fetching data from database!');
-        });
-    });
     </script>
 </body>
 
