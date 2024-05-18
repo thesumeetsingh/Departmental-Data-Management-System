@@ -11,6 +11,16 @@ if (!isset($_SESSION['username'])) {
 // Get the user's email from the session
 $userName = $_SESSION['username'];
 $userEmail = $_SESSION['useremail'];
+$department = $_SESSION['dept'];
+
+if ($department !== 'ADMIN') {
+    // Redirect to dept.php with an alert prompt
+    echo "<script>
+            alert('You are not an admin');
+            window.location.href = 'dept.php';
+          </script>";
+    exit();
+}
 
 // Check if the request method is POST (for AJAX requests)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -21,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Map departments to their corresponding table names
     $tableMapping = [
+        'SMS' => 'sms',
         'SMS2' => 'sms2',
         'SMS3' => 'sms3',
         'SPM' => 'spm',
@@ -58,10 +69,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $columns = ['TIME', 'DATE', 'POWER_GENERATION', 'LOAD_SECH_SMS2', 'LOAD_SECH_SMS3', 'LOAD_SECH_SMS_TOTAL', 'LOAD_SECH_RAILMILL', 'LOAD_SECH_PLATEMILL', 'LOAD_SECH_SPM', 'LOAD_SECH_NSPL', 'TOTAL'];
     } elseif ($department === 'JLDC') {
         $columns = ['TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+    }   else if ($department==='SMS'){
+        $columns = ['TIME', 'DATE', 'LOADSECH_SMS2','LOADSECH_SMS3', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
     } else {
         $columns = ['TIME', 'DATE', 'LOADSECH', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
     }
-
     // Prepare and execute the query
     $columnString = implode(", ", $columns);
     $stmt = $conn->prepare("SELECT $columnString FROM $tableName WHERE DATE = ?");
@@ -93,6 +105,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Web Portal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha384-KyZXEAg3QhqLMpG8r+Knujsl5/5hb7x6f5n2l5+4vpe5y5T1GZfgwS7L5R5Aq8s5" crossorigin="anonymous">
+
     <style>
         .form-group {
             display: flex;
@@ -102,10 +117,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             visibility: hidden;
             width: 0;
         }
-        .custom-file-label::after {
-            content: "Choose File";
-        }
-
     </style>
 </head>
 
@@ -140,24 +151,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="row">
                 <div class="card mb-2" style="background: rgb(177,176,160); background: linear-gradient(90deg, rgba(177,176,160,1) 0%, rgba(236,177,109,1) 100%); border: none;">
                     <div class="card-body d-flex justify-content-end gap-2">
-                        <!-- Option 1 Button -->
-                        <button type="button" class="btn btn-success" id="option1Btn">Show Database</button>
-
                         <!-- Option 2 Button -->
-                        <button type="button" class="btn btn-success" id="option2Btn">Update Database</button>
+                        <button type="button" class="btn btn-dark" id="option2Btn">Update Database</button>
                     </div>
                 </div>
             </div>
             <!-- Date selection and search button for Option 1 -->
-            <div class="row align-items-end" id="option1Section" style="display: none;">
-                <div class="col-md-4">
+            <div class="row align-items-end" id="option1Section">
+                <div class="col-md-3">
                     <label for="sheetDate" class="form-label">Select Sheet Date:</label>
                     <input type="date" class="form-control" id="sheetDate" required>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="department" class="form-label">Select Department:</label>
-                    <select name="department" id="department" class="form-control" required>
+                    <select name="department" id="department" class="form-control " required>
                         <option value="ALL">All Departments</option>
+                        <option value="SMS">SMS</option>
                         <option value="SMS2">SMS2</option>
                         <option value="SMS3">SMS3</option>
                         <option value="SPM">SPM</option>
@@ -167,125 +176,121 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <option value="JLDC">JLDC</option>
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <button type="button" class="btn btn-primary mt-4" id="searchBtn">Search</button>
+                <div class="col-md-3"></div>
+                <div class="btn-group col-md-3">
+                    <button type="button" class="btn btn-primary" id="searchBtn"><i class="fa fa-search"></i> Search</button>
+                    <button type="button" class="btn btn-dark" id="exportBtn"> <i class="fa fa-file-excel-o" aria-hidden="true"></i>Export to Excel </button>
                 </div>
-            </div>
-            <div class="card" id="myTable" style="padding: 20px; height:61vh; overflow-y: auto; margin-top:20px;">
-                <!-- Table to display results will be inserted here -->
+                <div class="card" id="myTable" style="padding: 20px; height:61vh; overflow-y: auto; margin-top:20px;">
+                    <!-- Table to display results will be inserted here -->
+                </div>
             </div>
         </div>
     </section>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
-        // Disable Option 2 initially
-        document.getElementById('option2Btn').disabled = true;
-
-        // Handle click on Option 1 button
-        document.getElementById('option1Btn').addEventListener('click', function() {
-            // Add your logic for Option 1 here
-            console.log('Option 1 clicked');
-            
-            // Show the date selection section and search button
-            document.getElementById('option1Section').style.display = 'flex';
-
-            // Disable Option 1 button and enable Option 2 button
-            this.disabled = true;
-            document.getElementById('option2Btn').disabled = false;
-        });
-
         // Handle click on Option 2 button
         document.getElementById('option2Btn').addEventListener('click', function() {
-            // Add your logic for Option 2 here
-            console.log('Option 2 clicked');
-            
-            // Hide the date selection section and search button for Option 1
-            document.getElementById('option1Section').style.display = 'none';
+            // Redirect to updateadmin.php page
+            window.location.href = 'updateadmin.php';
+        });
 
-            // Disable Option 2 button and enable Option 1 button
-            this.disabled = true;
-            document.getElementById('option1Btn').disabled = false;
+        // Handle click on Export to Excel button
+        document.getElementById('exportBtn').addEventListener('click', function() {
+            var table = document.getElementById('myTable').querySelector('table');
+
+            if (!table) {
+                alert('No data to export. Please import table first by clicking Search button.');
+                return;
+            }
+
+            var ws = XLSX.utils.table_to_sheet(table);
+            var wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+            XLSX.writeFile(wb, 'exported_data.xlsx');
         });
 
         // Handle click on Search button
         document.getElementById('searchBtn').addEventListener('click', function() {
-    var sheetDate = document.getElementById('sheetDate').value; // Get selected sheet date
-    var department = document.getElementById('department').value; // Get selected department
+            var sheetDate = document.getElementById('sheetDate').value; // Get selected sheet date
+            var department = document.getElementById('department').value; // Get selected department
 
-    if (!sheetDate) {
-        alert('Please select a sheet date.');
-        return;
-    }
+            if (!sheetDate) {
+                alert('Please select a sheet date.');
+                return;
+            }
 
-    if (!department) {
-        alert('Please select a department.');
-        return;
-    }
+            if (!department) {
+                alert('Please select a department.');
+                return;
+            }
 
-    // Send AJAX request to fetch data
-    fetch('admin.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ date: sheetDate, department: department })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            alert(data.error);
-            return;
-        }
+            // Send AJAX request to fetch data
+            fetch('admin.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ date: sheetDate, department: department })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
 
-        // Create a table to display the data
-        var table = document.createElement('table');
-        table.classList.add('table', 'table-striped');
-        
-        // Create table headers
-        var thead = document.createElement('thead');
-        var headerRow = document.createElement('tr');
-        var columns;
-        if (department === 'ALL') {
-            columns = ['TIME', 'DATE', 'POWER_GENERATION', 'LOAD_SECH_SMS2', 'LOAD_SECH_SMS3', 'LOAD_SECH_SMS_TOTAL', 'LOAD_SECH_RAILMILL', 'LOAD_SECH_PLATEMILL', 'LOAD_SECH_SPM', 'LOAD_SECH_NSPL', 'TOTAL'];
-        } else if (department === 'JLDC') {
-            columns = ['TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
-        } else {
-            columns = ['TIME', 'DATE', 'LOADSECH', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
-        }
+                // Create a table to display the data
+                var table = document.createElement('table');
+                table.classList.add('table', 'table-striped');
 
-        columns.forEach(col => {
-            var th = document.createElement('th');
-            th.textContent = col;
-            headerRow.appendChild(th);
-        });
-        thead.appendChild(headerRow);
-        table.appendChild(thead);
+                // Create table headers
+                var thead = document.createElement('thead');
+                var headerRow = document.createElement('tr');
+                var columns;
+                if (department === 'ALL') {
+                    columns = ['TIME', 'DATE', 'POWER_GENERATION', 'LOAD_SECH_SMS2', 'LOAD_SECH_SMS3', 'LOAD_SECH_SMS_TOTAL', 'LOAD_SECH_RAILMILL', 'LOAD_SECH_PLATEMILL', 'LOAD_SECH_SPM', 'LOAD_SECH_NSPL', 'TOTAL'];
+                } else if (department === 'JLDC') {
+                    columns = ['TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+                } else if (department === 'SMS') {
+                    columns = ['TIME', 'DATE', 'LOADSECH_SMS2','LOADSECH_SMS3', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+                } else {
+                    columns = ['TIME', 'DATE', 'LOADSECH', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+                }
 
-        // Create table body
-        var tbody = document.createElement('tbody');
-        data.forEach(row => {
-            var tr = document.createElement('tr');
-            columns.forEach(col => {
-                var td = document.createElement('td');
-                td.textContent = row[col];
-                tr.appendChild(td);
+                columns.forEach(col => {
+                    var th = document.createElement('th');
+                    th.textContent = col;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                // Create table body
+                var tbody = document.createElement('tbody');
+                data.forEach(row => {
+                    var tr = document.createElement('tr');
+                    columns.forEach(col => {
+                        var td = document.createElement('td');
+                        td.textContent = row[col];
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+
+                // Clear previous table data and append new table
+                var tableContainer = document.getElementById('myTable');
+                tableContainer.innerHTML = '';
+                tableContainer.appendChild(table);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error fetching data from database!');
             });
-            tbody.appendChild(tr);
         });
-        table.appendChild(tbody);
-
-        // Clear previous table data and append new table
-        var tableContainer = document.getElementById('myTable');
-        tableContainer.innerHTML = '';
-        tableContainer.appendChild(table);
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error fetching data from database!');
-    });
-});
-
     </script>
 </body>
 
