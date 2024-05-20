@@ -1,4 +1,5 @@
 <?php
+error_reporting(E_ALL & ~(E_WARNING | E_DEPRECATED));
 // Start PHP session
 session_start();
 
@@ -103,7 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
                 }
             }
         }
-        echo "Data inserted/updated successfully!";
+        echo "Data updated successfully!";
+        exit();
     } catch (Exception $e) {
         echo 'Error: ' . $e->getMessage();
     }
@@ -111,10 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
     // Close database connection
     $conn->close();
 } else {
-    // Redirect the user back to the same page without any warning messages
-    // header("Location: index.php"); // Comment out this line for debugging
-    // exit();
-    //echo "Debug: No file uploaded or invalid request."; // Debug statement
+    // Redirect the user back to the same page without any warning 
 }
 ?>
 
@@ -207,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
                 </div>
                 <div class="container-fluid mb-3">
                     <div class="row align-items-end">
-                        <div class="col-md-3">
+                        <div class="col-auto">
                             <label for="locationSelect" class="form-label">Select Location:</label>
                             <select class="form-select" id="locationSelect">
                                 <option value="" selected disabled>Select Location</option>
@@ -218,16 +217,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
                                 <option value="NALWA">NALWA</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-auto">
                             <label for="sheetDate" class="form-label">Select Sheet Date:</label>
                             <input type="date" class="form-control" id="sheetDate">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-auto mt-3 mt-md-0">
                             <label for="fileInput" class="btn btn-dark">Choose File</label>
                             <input type="file" id="fileInput" class="custom-file-input" accept=".xlsx,.xls" style="display: none;">
                             <button class="btn btn-dark" id="updateDatabaseBtn"><i class="fa fa-upload"></i> Update</button>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-auto">
 
                         </div>
                     </div>
@@ -279,7 +278,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
         alert('Please select a sheet date.');
         return;
     }
+    var fileInput = document.getElementById('fileInput').files[0]; // Get the selected file
 
+    // Check if no file is selected
+    if (!fileInput) {
+        alert('Please select a file first.');
+        return;
+    }
     var formData = new FormData();
     formData.append('file', document.getElementById('fileInput').files[0]);
     formData.append('sheetDate', sheetDate); // Add sheet date to form data

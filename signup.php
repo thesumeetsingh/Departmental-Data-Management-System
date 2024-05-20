@@ -138,8 +138,6 @@ $conn->close();
                                     <select id="department" name="department" class="form-control" required>
                                         <option value="">Select Department</option>
                                         <option value="SMS">SMS</option>
-                                        <option value="SMS2">SMS2</option>
-                                        <option value="SMS3">SMS3</option>
                                         <option value="RAILMILL">RAILMILL</option>
                                         <option value="PLATEMILL">PLATEMILL</option>
                                         <option value="SPM">SPM</option>

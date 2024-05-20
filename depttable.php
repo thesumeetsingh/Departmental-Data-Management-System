@@ -29,8 +29,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $tableMapping = [
         'SMS' => 'sms',
-        'SMS2' => 'sms2',
-        'SMS3' => 'sms3',
         'SPM' => 'spm',
         'NSPL' => 'nspl',
         'RAILMILL' => 'railmill',

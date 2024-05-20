@@ -1,4 +1,7 @@
 <?php
+// Suppress warnings including deprecated notices
+error_reporting(E_ALL & ~(E_WARNING | E_DEPRECATED));
+
 // Start PHP session
 session_start();
 
@@ -110,14 +113,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
             // Insert or update into power_table
             $powerColumn = '';
             switch ($userDept) {
-                case 'sms2':
-                case 'SMS2':
-                    $powerColumn = 'LOAD_SECH_SMS2';
-                    break;
-                case 'sms3':
-                case 'SMS3':
-                    $powerColumn = 'LOAD_SECH_SMS3';
-                    break;
                 case 'railmill':
                 case 'RAILMILL':
                     $powerColumn = 'LOAD_SECH_RAILMILL';
@@ -161,7 +156,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
                 }
             }
         }
-        echo "Data inserted successfully!";
+        echo "data inserted successfully";
+         exit();
     } catch (Exception $e) {
         echo 'Error: ' . $e->getMessage();
     }
@@ -169,11 +165,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
     // Close database connection
     $conn->close();
 } else {
-    // Redirect the user back to the same page without any warning messages
-    // header("Location: index.php"); // Comment out this line for debugging
-    // exit();
+
 }
+
 ?>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 <!DOCTYPE html>
@@ -259,32 +289,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
                     </div>
                 </div>
                 <div class="container-fluid mb-3">
-                    <div class="row align-items-end">
-                        <div class="col-auto">
-                            <label for="locationSelect" class="form-label"><b> Location:</b></label>
-                            <select class="form-select" id="locationSelect">
-                                <option value="" selected disabled>Select Location</option>
-                                <option value="ANGUL">ANGUL</option>
-                                <option value="RAIGARH">RAIGARH</option>
-                                <option value="PATRATU">PATRATU</option>
-                                <option value="TAMNAR">TAMNAR</option>
-                                <option value="NALWA">NALWA</option>
-                            </select>
-                        </div>
-                        <div class="col-auto">
-                            <label for="sheetDate" class="form-label"><b>Select Sheet Date:</b></label>
-                            <input type="date" class="form-control" id="sheetDate">
-                        </div>
-                        <div class="col-auto">
-                            <label for="fileInput" class="btn btn-dark">Choose File</label>
-                            <input type="file" id="fileInput" class="custom-file-input" accept=".xlsx,.xls" style="display: none;">
-                                                    
+    <div class="row align-items-end">
+        <div class="col-auto">
+            <label for="locationSelect" class="form-label"><b> Location:</b></label>
+            <select class="form-select" id="locationSelect">
+                <option value="" selected disabled>Select Location</option>
+                <option value="ANGUL">ANGUL</option>
+                <option value="RAIGARH">RAIGARH</option>
+                <option value="PATRATU">PATRATU</option>
+                <option value="TAMNAR">TAMNAR</option>
+                <option value="NALWA">NALWA</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <label for="sheetDate" class="form-label"><b>Select Sheet Date:</b></label>
+            <input type="date" class="form-control" id="sheetDate">
+        </div>
 
-                        <!-- Update Database button -->
-                        <button class="btn btn-dark" id="updateDatabaseBtn"><i class="fa fa-upload"></i>Update</button>
-                        </div>
-                    </div>
-                </div>
+        <div class="col-auto mt-3 mt-md-0"> <!-- Add margin top here for small screens -->
+            <label for="fileInput" class="btn btn-dark">Choose File</label>
+            <input type="file" id="fileInput" class="custom-file-input" accept=".xlsx,.xls" style="display: none;">
+            <!-- Update Database button -->
+            <button class="btn btn-dark" id="updateDatabaseBtn"><i class="fa fa-upload"></i>Update</button>
+        </div>
+    </div>
+</div>
+
 
 
                 <!-- Table container -->
