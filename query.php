@@ -98,28 +98,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         LOCATION VARCHAR(100)
                     )";
                     break;
-                case 'SMS2':
-                case 'sms2':
-                    $createTableQuery = "CREATE TABLE sms2 (
-                        TIME VARCHAR(100),
-                        DATE DATE,
-                        LOADSECH INT(5),
-                        UPDATEDBY VARCHAR(50),
-                        UPDATED_ON DATETIME,
-                        LOCATION VARCHAR(100)
-                    )";
-                    break;
-                case 'sms3':
-                case 'SMS3':
-                    $createTableQuery = "CREATE TABLE sms3 (
-                        TIME VARCHAR(100),
-                        DATE DATE,
-                        LOADSECH INT(5),
-                        UPDATEDBY VARCHAR(50),
-                        UPDATED_ON DATETIME,
-                        LOCATION VARCHAR(100)
-                    )";
-                    break;
                 case 'railmill':
                 case 'RAILMILL':
                     $createTableQuery = "CREATE TABLE railmill (
@@ -304,18 +282,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 UPDATED_ON DATETIME,
                                 LOCATION VARCHAR(100)
                             )";
-                            break;
-                        case 'SMS2':
-                        case 'sms2':
-                            $createTableQuery = "CREATE TABLE NSPL (
-                                TIME VARCHAR(100),
-                                DATE DATE,
-                                LOADSECH INT(5),
-                                UPDATEDBY VARCHAR(50),
-                                UPDATED_ON DATETIME,
-                                LOCATION VARCHAR(100)
-                            )";
-                            break;
                         case 'sms3':
                         case 'SMS3':
                             $createTableQuery = "CREATE TABLE NSPL (
@@ -392,7 +358,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 switch ($deletionTarget) {
                     case 'all':
-                        $tables = ['user_details', 'jldc', 'nspl','sms','sms2','sms3','spm','railmill','platemill','power_table'];
+                        $tables = ['user_details', 'jldc', 'nspl','sms','spm','railmill','platemill','power_table'];
                         foreach ($tables as $table) {
                             $deleteQuery = "DELETE FROM $table";
                             if ($conn->query($deleteQuery) === TRUE) {
@@ -407,8 +373,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     case 'jldc':
                     case 'nspl':
                     case 'sms':
-                    case 'sms2':
-                    case 'sms3':
                     case 'spm':
                     case 'railmill':
                     case 'platemill':
@@ -458,8 +422,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <option value="railmill">RAILMILL</option>
             <option value="platemill">PLATEMILL</option>
             <option value="sms">SMS</option>
-            <option value="sms2">SMS2</option>
-            <option value="sms3">SMS3</option>
         </select><br><br>
     </div>
 
