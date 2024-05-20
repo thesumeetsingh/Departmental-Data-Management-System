@@ -1,23 +1,19 @@
 <?php
-// Start PHP session
-session_start();
+session_start();// Start PHP session
 
-// Check if user is not logged in, redirect to login page
 if (!isset($_SESSION['username'])) {
     header("Location: login.php");
     exit();
 }
 
-// Get the user's email from the session
 $userName = $_SESSION['username'];
 $userEmail = $_SESSION['useremail'];
 $logdept = $_SESSION['dept'];
 
 if ($logdept !== 'ADMIN') {
-    // Redirect to dept.php with an alert prompt
     echo "<script>
             alert('You are not an admin');
-            window.location.href = 'dept.php';
+            window.location.href = 'index.php';
           </script>";
     exit();
 }
@@ -57,13 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tableName = $tableMapping[$selectedDept];
 
     // Connect to MySQL database
-    $conn = new mysqli('localhost', 'root', '', 'powerdb', 3306); // Adjust as per your database details
-
-    // Check connection
-    if ($conn->connect_error) {
-        echo json_encode(['error' => 'Database connection failed: ' . $conn->connect_error]);
-        exit();
-    }
+    include 'connection.php';
 
     $updationQuery = "UPDATE power_table
         SET 
@@ -87,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Prepare and execute the query
     $columnString = implode(", ", $columns);
-    $stmt = $conn->prepare("SELECT $columnString FROM $tableName WHERE DATE BETWEEN ? AND ?");
+    $stmt = $conn->prepare("SELECT $columnString FROM $tableName WHERE DATE BETWEEN ? AND ? ORDER BY DATE,TIME ASC");
     if ($stmt === false) {
         echo json_encode(['error' => 'Failed to prepare statement: ' . $conn->error]);
         exit();
@@ -142,6 +132,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             visibility: hidden;
             width: 0;
         }
+        #myTable{
+            text-align:center;
+        }
+        th, td {
+            border: 2px solid #e8e4e4;
+            padding: 8px;
+        }
+
     </style>
 </head>
 
@@ -207,8 +205,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="col-md-2"></div>
                 <div class="btn-group col-md-4">
-                    <button type="button" class="btn btn-primary" id="searchBtn"><i class="fa fa-search"></i></button>
-                    <button type="button" class="btn btn-dark" id="exportBtn"> <i class="fa fa-file-excel-o" aria-hidden="true"></i>Export to Excel </button>
+                    <button type="button" class="btn btn-primary" style=" width:20px;" id="searchBtn"><i class="fa fa-search"></i></button>
+                    <button type="button" class="btn btn-dark" style=" width:200px;"id="exportBtn"> <i class="fa fa-file-excel-o" aria-hidden="true"></i>Export to Excel </button>
                 </div>
                 <div class="card" id="myTable" style="padding: 20px; height:61vh; overflow-y: auto; margin-top:20px;">
                     <!-- Table to display results will be inserted here -->

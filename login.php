@@ -7,12 +7,7 @@ $password = "";
 $dbname = "powerdb";
 
 // Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+include 'connection.php';
 
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -41,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($dept == 'ADMIN') {
                 header("Location: admin.php");
             } else {
-                header("Location: dept.php");
+                header("Location: index.php");
             }
             exit();
         } else {
@@ -87,28 +82,20 @@ $conn->close();
     min-height: 100%;
 }
 
-.wrap {
+/* .wrap {
     display: flex;
     align-items: stretch;
     height: 100%;
-}
+} */
 .ftco-section {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh; /* This ensures it occupies the full viewport height */
+    min-height: 100vh; 
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
 }
-
-.img {
-    /* Adjust these properties based on your image requirements */
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
 
     </style>
 </head>

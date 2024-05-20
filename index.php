@@ -13,7 +13,7 @@ $userEmail = $_SESSION['useremail'];
 $department = $_SESSION['dept'];
 
 if ($department == 'ADMIN') {
-    // Redirect to dept.php with an alert prompt
+    // Redirect to index.php with an alert prompt
     echo "<script>
             alert('You are an admin');
             window.location.href = 'admin.php';
@@ -27,13 +27,7 @@ require 'PHPExcel/Classes/PHPExcel.php';
 require 'PHPExcel/Classes/PHPExcel/IOFactory.php'; // Include IOFactory as well if needed
 
 // Connect to MySQL database
-$conn = new mysqli('localhost', 'root', '', 'powerdb', 3306); // Adjust as per your database details
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
+include 'connection.php';
 // Check if file is uploaded
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
     // Get uploaded file data
@@ -205,6 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
         }
         #myTable {
             overflow-x: auto; /* Enable horizontal scrolling */
+            text-align:center;
         }
         /* Styling for the table */
         table {
@@ -266,7 +261,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
                 <div class="container-fluid mb-3">
                     <div class="row align-items-end">
                         <div class="col-auto">
-                            <label for="locationSelect" class="form-label">Select Location:</label>
+                            <label for="locationSelect" class="form-label"><b> Location:</b></label>
                             <select class="form-select" id="locationSelect">
                                 <option value="" selected disabled>Select Location</option>
                                 <option value="ANGUL">ANGUL</option>
@@ -277,7 +272,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
                             </select>
                         </div>
                         <div class="col-auto">
-                            <label for="sheetDate" class="form-label">Select Sheet Date:</label>
+                            <label for="sheetDate" class="form-label"><b>Select Sheet Date:</b></label>
                             <input type="date" class="form-control" id="sheetDate">
                         </div>
                         <div class="col-auto">
@@ -344,7 +339,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
     formData.append('sheetDate', sheetDate); // Add sheet date to form data
     formData.append('location', location);
 
-    fetch('dept.php', { // Change the URL to index.php
+    fetch('index.php', { // Change the URL to index.php
         method: 'POST',
         body: formData
     })

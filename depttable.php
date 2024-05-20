@@ -13,7 +13,7 @@ $userEmail = $_SESSION['useremail'];
 $department = $_SESSION['dept'];
 
 if ($department == 'ADMIN') {
-    // Redirect to dept.php with an alert prompt
+    // Redirect to index.php with an alert prompt
     echo "<script>
             alert('You are an admin');
             window.location.href = 'admin.php';
@@ -46,11 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $tableName = $tableMapping[$department];
 
-    $conn = new mysqli('localhost', 'root', '', 'powerdb', 3306);
-
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    include 'connection.php';
 
     if ($department === 'JLDC') {
         $columns = ['TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
@@ -62,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Prepare and execute the query
     $columnString = implode(", ", $columns);
-    $stmt = $conn->prepare("SELECT $columnString FROM $tableName WHERE DATE BETWEEN ? AND ?");
+    $stmt = $conn->prepare("SELECT $columnString FROM $tableName WHERE DATE BETWEEN ? AND ? ORDER BY DATE,TIME ASC");
     $stmt->bind_param("ss", $fromDate, $toDate);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -101,6 +97,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .custom-file-input {
             visibility: hidden;
             width: 0;
+        }
+        #myTable{
+            text-align:center;
         }
     </style>
 </head>
@@ -165,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script>
         document.getElementById('updateDeptBTN').addEventListener('click', function() {
             // Redirect to updateadmin.php page
-            window.location.href = 'dept.php';
+            window.location.href = 'index.php';
         });
 
         document.getElementById('exportBtn').addEventListener('click', function() {

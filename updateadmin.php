@@ -15,10 +15,10 @@ $userDepartment = $_SESSION['dept'];
 
 // Check if the user is not an admin
 if ($userDepartment !== 'ADMIN') {
-    // Redirect to dept.php with an alert prompt
+    // Redirect to index.php with an alert prompt
     echo "<script>
             alert('You are not an admin');
-            window.location.href = 'dept.php';
+            window.location.href = 'index.php';
           </script>";
     exit();
 }
@@ -33,12 +33,7 @@ require 'PHPExcel/Classes/PHPExcel/IOFactory.php'; // Include IOFactory as well 
 // Check if file is uploaded
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
     // Connect to MySQL database
-    $conn = new mysqli('localhost', 'root', '', 'powerdb', 3306); // Adjust as per your database details
-
-    // Check connection
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    include 'connection.php';
 
     // Get uploaded file data
     $file = $_FILES['file']['tmp_name'];
@@ -148,6 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
         }
         #myTable {
             overflow-x: auto; /* Enable horizontal scrolling */
+            text-align:center;
         }
         /* Styling for the table */
         table {
