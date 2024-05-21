@@ -52,7 +52,7 @@ The Departmental Data Management System (DDMS) is a full-stack web application d
 ## Setup Instructions
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/DDMS.git
+   [git clone https://github.com/yourusername/DDMS.git](https://github.com/thesumeetsingh/Departmental-Data-Management-System.git
    ```
 2. Clone the repository:
    ```bash
