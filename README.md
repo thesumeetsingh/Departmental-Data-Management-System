@@ -54,7 +54,7 @@ The Departmental Data Management System (DDMS) is a full-stack web application d
    ```bash
    https://github.com/thesumeetsingh/Departmental-Data-Management-System.git
    ```
-2. Clone the repository:
+2. Navigate to project folder:
    ```bash
    cd Departmental-Data-Management-System.git
    ```
