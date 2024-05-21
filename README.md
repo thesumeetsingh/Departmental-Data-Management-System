@@ -56,7 +56,7 @@ The Departmental Data Management System (DDMS) is a full-stack web application d
    ```
 2. Clone the repository:
    ```bash
-   cd DDMS
+   cd Departmental-Data-Management-System.git
    ```
 3. Setup the Database:
   - Import the provided SQL script (database.sql) to create the required tables in MySQL.
