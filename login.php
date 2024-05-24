@@ -1,4 +1,5 @@
 <?php
+include 'supressError.php';
 session_start();
 // Database connection parameters
 $servername = "localhost";

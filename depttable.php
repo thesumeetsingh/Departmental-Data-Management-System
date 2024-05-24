@@ -1,4 +1,5 @@
 <?php
+include 'supressError.php';
 // Start PHP session
 session_start();
 

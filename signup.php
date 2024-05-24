@@ -1,4 +1,5 @@
 <?php
+include 'supressError.php';
 // Create connection
 include 'connection.php';
 // Check if form is submitted

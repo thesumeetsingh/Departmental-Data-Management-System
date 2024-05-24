@@ -1,6 +1,5 @@
 <?php
-//error_reporting(E_ALL & ~(E_WARNING | E_DEPRECATED));
-// Start PHP session
+include 'supressError.php';
 session_start();
 
 // Check if user is not logged in, redirect to login page

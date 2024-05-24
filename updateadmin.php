@@ -1,5 +1,5 @@
 <?php
-error_reporting(E_ALL & ~(E_WARNING | E_DEPRECATED));
+include 'supressError.php';
 session_start();
 
 if (!isset($_SESSION['username'])) {
