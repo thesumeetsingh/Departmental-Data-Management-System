@@ -1,22 +1,17 @@
 <?php
 error_reporting(E_ALL & ~(E_WARNING | E_DEPRECATED));
-// Start PHP session
 session_start();
 
-// Check if user is not logged in, redirect to login page
 if (!isset($_SESSION['username'])) {
     header("Location: login.php");
     exit();
 }
 
-// Get the user's email from the session
 $userName = $_SESSION['username'];
 $userEmail = $_SESSION['useremail'];
 $userDepartment = $_SESSION['dept'];
 
-// Check if the user is not an admin
 if ($userDepartment !== 'ADMIN') {
-    // Redirect to index.php with an alert prompt
     echo "<script>
             alert('You are not an admin');
             window.location.href = 'index.php';
@@ -24,60 +19,36 @@ if ($userDepartment !== 'ADMIN') {
     exit();
 }
 
-// Set the timezone to Kolkata/Chennai
 date_default_timezone_set('Asia/Kolkata');
 
-// Include PHPExcel classes
-require 'PHPExcel/Classes/PHPExcel.php';
-require 'PHPExcel/Classes/PHPExcel/IOFactory.php'; // Include IOFactory as well if needed
-
-// Check if file is uploaded
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
-    // Connect to MySQL database
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data'])) {
     include 'connection.php';
 
-    // Get uploaded file data
-    $file = $_FILES['file']['tmp_name'];
-
-    // Get the selected sheet date and location
-    $sheetDate = isset($_POST['sheetDate']) ? $_POST['sheetDate'] : null;
-    $location = isset($_POST['location']) ? $_POST['location'] : null;
+    $data = json_decode($_POST['data'], true);
+    $sheetDate = $data['sheetDate'];
+    $location = $data['location'];
     $updatingUser = $_SESSION['username'];
-    // Get current date and time
     $currentDateTime = date("Y-m-d H:i:s");
+    $rows = $data['rows'];
 
     try {
-        // Load the uploaded file using PHPExcel
-        $objPHPExcel = PHPExcel_IOFactory::load($file);
+        foreach ($rows as $row) {
+            $time = $row['A'];
+            $date = $sheetDate;
+            $powerGeneration = $row['C'];
+            $loadSechSMS2 = $row['D'];
+            $loadSechSMS3 = $row['E'];
+            $loadSechSMSTotal = $row['D'] + $row['E'];
+            $loadSechRailMill = $row['G'];
+            $loadSechPlateMill = $row['H'];
+            $loadSechSPM = $row['I'];
+            $loadSechNSPL = $row['J'];
+            $total = $loadSechSMS2 + $loadSechSMS3 + $loadSechRailMill + $loadSechPlateMill + $loadSechSPM + $loadSechNSPL;
 
-        // Get the active sheet
-        $sheet = $objPHPExcel->getActiveSheet();
-
-        // Get the highest row and column numbers
-        $highestRow = $sheet->getHighestRow();
-        $highestColumn = $sheet->getHighestColumn();
-
-        // Iterate through each row in the sheet starting from the third row
-        for ($row = 3; $row <= $highestRow; $row++) {
-            // Get cell values for each column
-            $time = $sheet->getCell('A' . $row)->getValue();
-            $date = $sheetDate; // Use the selected sheet date
-            $powerGeneration = $sheet->getCell('C' . $row)->getValue();
-            $loadSechSMS2 = $sheet->getCell('D' . $row)->getValue();
-            $loadSechSMS3 = $sheet->getCell('E' . $row)->getValue();
-            $loadSechSMSTotal = ($sheet->getCell('D' . $row)->getValue() + $sheet->getCell('E' . $row)->getValue());
-            $loadSechRailMill = $sheet->getCell('G' . $row)->getValue();
-            $loadSechPlateMill = $sheet->getCell('H' . $row)->getValue();
-            $loadSechSPM = $sheet->getCell('I' . $row)->getValue();
-            $loadSechNSPL = $sheet->getCell('J' . $row)->getValue();
-            $total = ($sheet->getCell('D' . $row)->getValue() + $sheet->getCell('E' . $row)->getValue() + $sheet->getCell('G' . $row)->getValue() + $sheet->getCell('H' . $row)->getValue() + $sheet->getCell('I' . $row)->getValue() + $sheet->getCell('J' . $row)->getValue());
-
-            // Check if a row with the same DATE and TIME already exists
             $checkQuery = "SELECT * FROM power_table WHERE DATE = '$date' AND TIME = '$time'";
             $checkResult = $conn->query($checkQuery);
 
             if ($checkResult->num_rows > 0) {
-                // Update the existing row
                 $updateQuery = "UPDATE power_table SET 
                                 POWER_GENERATION = '$powerGeneration',
                                 LOAD_SECH_SMS2 = '$loadSechSMS2',
@@ -96,11 +67,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
                     echo "Error updating record: " . $conn->error;
                 }
             } else {
-                // Insert a new row
                 $insertQuery = "INSERT INTO power_table (TIME, DATE, POWER_GENERATION, LOAD_SECH_SMS2, LOAD_SECH_SMS3, LOAD_SECH_SMS_TOTAL, LOAD_SECH_RAILMILL, LOAD_SECH_PLATEMILL, LOAD_SECH_SPM, LOAD_SECH_NSPL, TOTAL, UPDATEDBY, UPDATED_ON, LOCATION) 
                                 VALUES ('$time', '$date', '$powerGeneration', '$loadSechSMS2', '$loadSechSMS3', '$loadSechSMSTotal', '$loadSechRailMill', '$loadSechPlateMill', '$loadSechSPM', '$loadSechNSPL', '$total', '$updatingUser', '$currentDateTime', '$location')";
                 if ($conn->query($insertQuery) !== TRUE) {
                     echo "Error inserting record: " . $conn->error;
+                }
+            }
+
+            $tables = ['JLDC', 'NSPL', 'SMS', 'SPM', 'RAILMILL', 'PLATEMILL'];
+            foreach ($tables as $table) {
+                if ($table == 'SMS') {
+                    $checkTableQuery = "SELECT * FROM $table WHERE DATE = '$date' AND TIME = '$time'";
+                    $checkTableResult = $conn->query($checkTableQuery);
+
+                    if ($checkTableResult->num_rows > 0) {
+                        $updateTableQuery = "UPDATE $table SET 
+                                        LOADSECH_SMS2 = '$loadSechSMS2',
+                                        LOADSECH_SMS3 = '$loadSechSMS3',
+                                        UPDATEDBY = '$updatingUser',
+                                        UPDATED_ON = '$currentDateTime',
+                                        LOCATION = '$location'
+                                        WHERE DATE = '$date' AND TIME = '$time'";
+                        if ($conn->query($updateTableQuery) !== TRUE) {
+                            echo "Error updating record: " . $conn->error;
+                        }
+                    } else {
+                        $insertQuery = "INSERT INTO $table (TIME, DATE, LOADSECH_SMS2, LOADSECH_SMS3, UPDATEDBY, UPDATED_ON, LOCATION) 
+                                        VALUES ('$time', '$date', '$loadSechSMS2', '$loadSechSMS3', '$updatingUser', '$currentDateTime', '$location')";
+                        if ($conn->query($insertQuery) !== TRUE) {
+                            echo "Error inserting record: " . $conn->error;
+                        }
+                    }
+                } else {
+                    $loadSechColumn = ($table == 'JLDC') ? 'POWER_GENERATION' : 'LOADSECH';
+                    $deptValue = ($table == 'JLDC') ? $powerGeneration : (($table == 'NSPL') ? $loadSechNSPL : (($table == 'SPM') ? $loadSechSPM : (($table == 'RAILMILL') ? $loadSechRailMill : $loadSechPlateMill)));
+
+                    $checkTableQuery = "SELECT * FROM $table WHERE DATE = '$date' AND TIME = '$time'";
+                    $checkTableResult = $conn->query($checkTableQuery);
+
+                    if ($checkTableResult->num_rows > 0) {
+                        $updateTableQuery = "UPDATE $table SET 
+                                        $loadSechColumn = '$deptValue',
+                                        UPDATEDBY = '$updatingUser',
+                                        UPDATED_ON = '$currentDateTime',
+                                        LOCATION = '$location'
+                                        WHERE DATE = '$date' AND TIME = '$time'";
+                        if ($conn->query($updateTableQuery) !== TRUE) {
+                            echo "Error updating record: " . $conn->error;
+                        }
+                    } else {
+                        $insertQuery = "INSERT INTO $table (TIME, DATE, $loadSechColumn, UPDATEDBY, UPDATED_ON, LOCATION) 
+                                        VALUES ('$time', '$date', '$deptValue', '$updatingUser', '$currentDateTime', '$location')";
+                        if ($conn->query($insertQuery) !== TRUE) {
+                            echo "Error inserting record: " . $conn->error;
+                        }
+                    }
                 }
             }
         }
@@ -110,12 +131,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
         echo 'Error: ' . $e->getMessage();
     }
 
-    // Close database connection
     $conn->close();
 } else {
     // Redirect the user back to the same page without any warning 
 }
 ?>
+
 
 
 
@@ -162,6 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
         tr:not(:nth-child(-n+2)):hover {
             background-color: #f2f2f2;
         }
+
     </style>
 </head>
 
@@ -172,17 +194,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo02" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse " id="navbarTogglerDemo02">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fa-solid fa-user"></i> <?php echo $userEmail; ?></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
+            <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
+    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+            <a class="nav-link" href="#"><i class="fa-solid fa-user"></i> <?php echo $userEmail; ?></a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+        </li>
+    </ul>
+</div>
     </nav>
 
     <div class="container-fluid">
@@ -197,7 +218,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
                 <div class="card mb-2" style="background: rgb(177,176,160); background: linear-gradient(90deg, rgba(177,176,160,1) 0%, rgba(236,177,109,1) 100%); border: none;">
                     <div class="card-body d-flex justify-content-end gap-2">
 
-
+                    <button class='btn btn-dark' id="downloadSample">Download Sample</button>
                         <!-- Export to Excel button -->
                         <button type="button" class="btn btn-dark" id="toViewDB">View Database</button>
 
@@ -245,30 +266,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
 
     <script>
-        document.getElementById('toViewDB').addEventListener('click', function() {
-    // Redirect to updateadmin.php page
-        window.location.href = 'admin.php';
-        });
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            var file = e.target.files[0];
-            var reader = new FileReader();
-            reader.readAsBinaryString(file);
-            reader.onload = function(e) {
-                var data = e.target.result;
-                var workbook = XLSX.read(data, { type: 'binary' });
-                var sheetName = workbook.SheetNames[0];
-                var sheet = workbook.Sheets[sheetName];
-                var htmlTable = XLSX.utils.sheet_to_html(sheet);
+document.getElementById('toViewDB').addEventListener('click', function() {
+    window.location.href = 'admin.php';
+});
 
-                document.getElementById('myTable').innerHTML = htmlTable;
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    var reader = new FileReader();
+    reader.readAsBinaryString(file);
+    reader.onload = function(e) {
+        var data = e.target.result;
+        var workbook = XLSX.read(data, { type: 'binary' });
+        var sheetName = workbook.SheetNames[0];
+        var sheet = workbook.Sheets[sheetName];
+        var htmlTable = XLSX.utils.sheet_to_html(sheet);
 
-                // Calculate and update column 6 and column 11 values
-                updateCalculatedValues();
-            };
-        });
+        document.getElementById('myTable').innerHTML = htmlTable;
 
-        document.getElementById('updateDatabaseBtn').addEventListener('click', function() {
-    var sheetDate = document.getElementById('sheetDate').value; // Get selected sheet date
+        // Calculate and update column 6 and column 11 values
+        updateCalculatedValues();
+    };
+});
+
+document.getElementById('updateDatabaseBtn').addEventListener('click', function() {
+    var sheetDate = document.getElementById('sheetDate').value;
     var location = document.getElementById('locationSelect').value;
     if (!location || location === "") {
         alert('Please select a location.');
@@ -278,70 +299,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
         alert('Please select a sheet date.');
         return;
     }
-    var fileInput = document.getElementById('fileInput').files[0]; // Get the selected file
-
-    // Check if no file is selected
+    var fileInput = document.getElementById('fileInput').files[0];
     if (!fileInput) {
         alert('Please select a file first.');
         return;
     }
-    var formData = new FormData();
-    formData.append('file', document.getElementById('fileInput').files[0]);
-    formData.append('sheetDate', sheetDate); // Add sheet date to form data
-    formData.append('location', location);
+    var reader = new FileReader();
+    reader.readAsBinaryString(fileInput);
+    reader.onload = function(e) {
+        var data = e.target.result;
+        var workbook = XLSX.read(data, { type: 'binary' });
+        var sheetName = workbook.SheetNames[0];
+        var sheet = workbook.Sheets[sheetName];
+        var jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        var rows = [];
+        for (var i = 2; i < jsonData.length; i++) {
+            var row = {};
+            row.A = jsonData[i][0] || ''; // Assuming A is the time column
+            row.C = jsonData[i][2] || ''; // Assuming C is the power generation column
+            row.D = jsonData[i][3] || ''; // Assuming D is the load sech sms 2 column
+            row.E = jsonData[i][4] || ''; // Assuming E is the load sech sms 3 column
+            row.G = jsonData[i][6] || ''; // Assuming G is the load sech rail mill column
+            row.H = jsonData[i][7] || ''; // Assuming H is the load sech plate mill column
+            row.I = jsonData[i][8] || ''; // Assuming I is the load sech spm column
+            row.J = jsonData[i][9] || ''; // Assuming J is the load sech nspl column
+            rows.push(row);
+        }
+        var formData = new FormData();
+        formData.append('data', JSON.stringify({ sheetDate: sheetDate, location: location, rows: rows }));
 
-    fetch('updateadmin.php', { // Change the URL to index.php
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.text())
-    .then(data => {
-        alert(data); // Display the server response
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error updating database!');
-    });
+        fetch('updateadmin.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(data); // Display the server response
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating database!');
+            });
+    };
 });
 
-        document.getElementById('exportBtn').addEventListener('click', function() {
-            var table = document.getElementById('myTable');
-            if (table.children.length === 0) { // Check if table is empty
-                alert('No data to export. Please upload a file first.');
-                return;
-            }
+// Function to update calculated values in the table
+function updateCalculatedValues() {
+    var table = document.getElementById('myTable');
+    var rows = table.rows;
 
-            var ws = XLSX.utils.table_to_sheet(table);
-            var wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-            XLSX.writeFile(wb, 'exported_data.xlsx');
-        });
+    // Start from row 3 as the first two rows are header rows
+    for (var i = 2; i < rows.length; i++) {
+        var row = rows[i];
+        var col4 = parseInt(row.cells[3].textContent) || 0; // Value in column 4
+        var col5 = parseInt(row.cells[4].textContent) || 0; // Value in column 5
+        var col7 = parseInt(row.cells[6].textContent) || 0; // Value in column 7
+        var col8 = parseInt(row.cells[7].textContent) || 0; // Value in column 8
+        var col9 = parseInt(row.cells[8].textContent) || 0; // Value in column 9
+        var col10 = parseInt(row.cells[9].textContent) || 0; // Value in column 10
 
-        // Function to update calculated values in the table
-        function updateCalculatedValues() {
-            var table = document.getElementById('myTable');
-            var rows = table.rows;
+        // Calculate values for column 6 and column 11
+        var col6 = col4 + col5;
+        var col11 = (( parseInt(row.cells[4].textContent)) + (parseInt(row.cells[5].textContent)) + (parseInt(row.cells[7].textContent))+ (parseInt(row.cells[8].textContent))+ (parseInt(row.cells[9].textContent))+ (parseInt(row.cells[10].textContent)));
 
-            // Start from row 3 as the first two rows are header rows
-            for (var i = 2; i < rows.length; i++) {
-                var row = rows[i];
-                var col4 = parseInt(row.cells[3].textContent) || 0; // Value in column 4
-                var col5 = parseInt(row.cells[4].textContent) || 0; // Value in column 5
-                var col7 = parseInt(row.cells[6].textContent) || 0; // Value in column 7
-                var col8 = parseInt(row.cells[7].textContent) || 0; // Value in column 8
-                var col9 = parseInt(row.cells[8].textContent) || 0; // Value in column 9
-                var col10 = parseInt(row.cells[9].textContent) || 0; // Value in column 10
+        // Update the cells in the row with calculated values
 
-                // Calculate values for column 6 and column 11
-                var col6 = col4 + col5;
-                var col11 = col4 + col5 + col7 + col8 + col9 + col10;
-
-                // Update the cells in the row with calculated values
-                row.cells[5].textContent = col6;
-                row.cells[10].textContent = col11;
-            }
-        }
-    </script>
+    }
+}
+</script>
     <script>
         // Function to get URL parameter by name
         function getUrlParameter(name) {
@@ -363,6 +388,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
         var email = getUrlParameter('email');
         document.getElementById('userEmail').textContent = email;
     </script>
+        <script>
+  document.getElementById('downloadSample').addEventListener('click', function() {
+            var fileName = 'admin.xlsx';
+            var filePath = 'samplesheets/' + fileName;
+
+            var link = document.createElement('a');
+            link.href = filePath;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+</script>
 </body>
 
 </html>

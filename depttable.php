@@ -28,12 +28,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $toDate = $requestData['toDate'];
 
     $tableMapping = [
-        'SMS' => 'sms',
-        'SPM' => 'spm',
-        'NSPL' => 'nspl',
-        'RAILMILL' => 'railmill',
-        'PLATEMILL' => 'platemill',
-        'JLDC' => 'jldc',
+        'SMS' => 'SMS',
+        'SPM' => 'SPM',
+        'NSPL' => 'NSPL',
+        'RAILMILL' => 'RAILMILL',
+        'PLATEMILL' => 'PLATEMILL',
+        'JLDC' => 'JLDC',
         'ALL' => 'power_table'
     ];
 

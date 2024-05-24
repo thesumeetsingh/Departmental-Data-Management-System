@@ -1,88 +1,47 @@
 <?php
-// Suppress warnings including deprecated notices
-error_reporting(E_ALL & ~(E_WARNING | E_DEPRECATED));
-
-// Start PHP session
 session_start();
 
-// Check if user is not logged in, redirect to login page
 if (!isset($_SESSION['username'])) {
     header("Location: login.php");
     exit();
 }
 
 $userName = $_SESSION['username'];
-$userEmail = $_SESSION['useremail'];
 $department = $_SESSION['dept'];
-
-if ($department == 'ADMIN') {
-    // Redirect to index.php with an alert prompt
-    echo "<script>
-            alert('You are an admin');
-            window.location.href = 'admin.php';
-          </script>";
-    exit();
-}
-// Set the timezone to Kolkata/Chennai
-date_default_timezone_set('Asia/Kolkata');
-// Include PHPExcel classes
-require 'PHPExcel/Classes/PHPExcel.php';
-require 'PHPExcel/Classes/PHPExcel/IOFactory.php'; // Include IOFactory as well if needed
-
-// Connect to MySQL database
+$userEmail = $_SESSION['useremail'];
 include 'connection.php';
-// Check if file is uploaded
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
-    // Get uploaded file data
-    $file = $_FILES['file']['tmp_name'];
-    $userDept = $_SESSION['dept'];
-    // Get the selected sheet date and location
-    $sheetDate = isset($_POST['sheetDate']) ? $_POST['sheetDate'] : null;
-    $location = isset($_POST['location']) ? $_POST['location'] : null;
-    $updatinguser = $_SESSION['username'];
-    // Get current date and time
-    $currentDateTime = date("Y-m-d H:i:s");
+date_default_timezone_set('Asia/Kolkata');
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['data']) && isset($_POST['sheetDate']) && isset($_POST['location'])) {
+        $data = json_decode($_POST['data'], true);
+        $sheetDate = $_POST['sheetDate'];
+        $location = $_POST['location'];
+        $updatinguser = $userName;
+        $currentDateTime = date("Y-m-d H:i:s");
 
-    try {
-        // Load the uploaded file using PHPExcel
-        $objPHPExcel = PHPExcel_IOFactory::load($file);
+        foreach ($data as $row) {
+            $time = $row[0];
+            $departmentValue = $row[2];
+            $loadsechColumn = ($department === 'JLDC') ? 'POWER_GENERATION' : 'LOADSECH';
 
-        // Get the active sheet
-        $sheet = $objPHPExcel->getActiveSheet();
-
-        // Get the highest row and column numbers
-        $highestRow = $sheet->getHighestRow();
-        $highestColumn = $sheet->getHighestColumn();
-
-        // Iterate through each row in the sheet starting from the third row
-        for ($row = 2; $row <= $highestRow; $row++) {
-            // Get cell values for each column
-            $time = $sheet->getCell('A' . $row)->getValue();
-            $date = $sheetDate; // Use the selected sheet date
-            $departmentValue = $sheet->getCell('C' . $row)->getValue();
-            $loadsechColumn = ($userDept === 'JLDC') ? 'POWER_GENERATION' : 'LOADSECH';
-
-            // Check if the date and time combination exists in the department table
-            $checkDeptSql = "SELECT * FROM $userDept WHERE DATE='$date' AND TIME='$time'";
+            $checkDeptSql = "SELECT * FROM $department WHERE DATE='$sheetDate' AND TIME='$time'";
             $checkDeptResult = $conn->query($checkDeptSql);
 
             if ($checkDeptResult->num_rows > 0) {
-                // Update existing row
-                if ($userDept === 'SMS') {
-                    $departmentValue2 = $sheet->getCell('D' . $row)->getValue(); // Additional column value for SMS table
-                    $deptSql = "UPDATE $userDept SET LOADSECH_SMS2='$departmentValue', LOADSECH_SMS3='$departmentValue2', UPDATEDBY='$updatinguser', UPDATED_ON='$currentDateTime', LOCATION='$location' WHERE DATE='$date' AND TIME='$time'";
+                if ($department === 'SMS') {
+                    $departmentValue2 = $row[3];
+                    $deptSql = "UPDATE $department SET LOADSECH_SMS2='$departmentValue', LOADSECH_SMS3='$departmentValue2', UPDATEDBY='$updatinguser', UPDATED_ON='$currentDateTime', LOCATION='$location' WHERE DATE='$sheetDate' AND TIME='$time'";
                 } else {
-                    $deptSql = "UPDATE $userDept SET $loadsechColumn='$departmentValue', UPDATEDBY='$updatinguser', UPDATED_ON='$currentDateTime', LOCATION='$location' WHERE DATE='$date' AND TIME='$time'";
+                    $deptSql = "UPDATE $department SET $loadsechColumn='$departmentValue', UPDATEDBY='$updatinguser', UPDATED_ON='$currentDateTime', LOCATION='$location' WHERE DATE='$sheetDate' AND TIME='$time'";
                 }
             } else {
-                // Insert new row
-                if ($userDept === 'SMS') {
-                    $departmentValue2 = $sheet->getCell('D' . $row)->getValue(); // Additional column value for SMS table
-                    $deptSql = "INSERT INTO $userDept (TIME, DATE, LOADSECH_SMS2, LOADSECH_SMS3, UPDATEDBY, UPDATED_ON, LOCATION) 
-                                VALUES ('$time', '$date', '$departmentValue', '$departmentValue2', '$updatinguser', '$currentDateTime', '$location')";
+                if ($department === 'SMS') {
+                    $departmentValue2 = $row[3];
+                    $deptSql = "INSERT INTO $department (TIME, DATE, LOADSECH_SMS2, LOADSECH_SMS3, UPDATEDBY, UPDATED_ON, LOCATION) 
+                                VALUES ('$time', '$sheetDate', '$departmentValue', '$departmentValue2', '$updatinguser', '$currentDateTime', '$location')";
                 } else {
-                    $deptSql = "INSERT INTO $userDept (TIME, DATE, $loadsechColumn, UPDATEDBY, UPDATED_ON, LOCATION) 
-                                VALUES ('$time', '$date', '$departmentValue', '$updatinguser', '$currentDateTime', '$location')";
+                    $deptSql = "INSERT INTO $department (TIME, DATE, $loadsechColumn, UPDATEDBY, UPDATED_ON, LOCATION) 
+                                VALUES ('$time', '$sheetDate', '$departmentValue', '$updatinguser', '$currentDateTime', '$location')";
                 }
             }
 
@@ -90,120 +49,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
                 echo "Error: " . $deptSql . "<br>" . $conn->error;
             }
 
-            // For SMS department, update power_table with SMS columns
-            if ($userDept === 'SMS') {
-                // Check if the date and time combination exists in power_table for SMS
-                $checkSqlSMS = "SELECT * FROM power_table WHERE DATE='$date' AND TIME='$time'";
+            if ($department === 'SMS') {
+                $checkSqlSMS = "SELECT * FROM power_table WHERE DATE='$sheetDate' AND TIME='$time'";
                 $checkResultSMS = $conn->query($checkSqlSMS);
                 if ($checkResultSMS->num_rows > 0) {
-                    // Update existing row
-                    $updateSqlSMS = "UPDATE power_table SET LOAD_SECH_SMS2='$departmentValue', LOAD_SECH_SMS3='$departmentValue2' WHERE DATE='$date' AND TIME='$time'";
+                    $updateSqlSMS = "UPDATE power_table SET LOAD_SECH_SMS2='$departmentValue', LOAD_SECH_SMS3='$departmentValue2' WHERE DATE='$sheetDate' AND TIME='$time'";
                     if ($conn->query($updateSqlSMS) !== TRUE) {
                         echo "Error updating power_table for SMS: " . $conn->error;
                     }
                 } else {
-                    // Insert new row
-                    $insertSqlSMS = "INSERT INTO power_table (DATE, TIME, LOAD_SECH_SMS2, LOAD_SECH_SMS3) VALUES ('$date', '$time', '$departmentValue', '$departmentValue2')";
+                    $insertSqlSMS = "INSERT INTO power_table (DATE, TIME, LOAD_SECH_SMS2, LOAD_SECH_SMS3) VALUES ('$sheetDate', '$time', '$departmentValue', '$departmentValue2')";
                     if ($conn->query($insertSqlSMS) !== TRUE) {
                         echo "Error inserting into power_table for SMS: " . $conn->error;
                     }
                 }
             }
 
-            // Insert or update into power_table
             $powerColumn = '';
-            switch ($userDept) {
+            switch (strtolower($department)) {
                 case 'railmill':
-                case 'RAILMILL':
                     $powerColumn = 'LOAD_SECH_RAILMILL';
                     break;
                 case 'platemill':
-                case 'PLATEMILL':
                     $powerColumn = 'LOAD_SECH_PLATEMILL';
                     break;
                 case 'spm':
-                case 'SPM':
                     $powerColumn = 'LOAD_SECH_SPM';
                     break;
                 case 'nspl':
-                case 'NSPL':
                     $powerColumn = 'LOAD_SECH_NSPL';
                     break;
                 case 'jldc':
-                case 'JLDC':
                     $powerColumn = 'POWER_GENERATION';
                     break;
                 default:
-                    // Handle other cases or errors
                     break;
             }
+
             if (!empty($powerColumn)) {
-                // Check if the date and time combination exists in power_table
-                $checkSql = "SELECT * FROM power_table WHERE DATE='$date' AND TIME='$time'";
+                $checkSql = "SELECT * FROM power_table WHERE DATE='$sheetDate' AND TIME='$time'";
                 $checkResult = $conn->query($checkSql);
                 if ($checkResult->num_rows > 0) {
-                    // Update existing row
-                    $updateSql = "UPDATE power_table SET $powerColumn='$departmentValue' WHERE DATE='$date' AND TIME='$time'";
+                    $updateSql = "UPDATE power_table SET $powerColumn='$departmentValue' WHERE DATE='$sheetDate' AND TIME='$time'";
                     if ($conn->query($updateSql) !== TRUE) {
                         echo "Error updating power_table: " . $conn->error;
                     }
                 } else {
-                    // Insert new row
-                    $insertSql = "INSERT INTO power_table (DATE, TIME, $powerColumn) VALUES ('$date', '$time', '$departmentValue')";
+                    $insertSql = "INSERT INTO power_table (DATE, TIME, $powerColumn) VALUES ('$sheetDate', '$time', '$departmentValue')";
                     if ($conn->query($insertSql) !== TRUE) {
                         echo "Error inserting into power_table: " . $conn->error;
                     }
                 }
             }
         }
-        echo "data inserted successfully";
-         exit();
-    } catch (Exception $e) {
-        echo 'Error: ' . $e->getMessage();
+
+        echo "Data inserted successfully";
+        exit();
+    } else {
+        //echo "Invalid request";
     }
 
-    // Close database connection
     $conn->close();
 } else {
-
+    //echo "Invalid request method";
 }
-
 ?>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 <!DOCTYPE html>
@@ -285,6 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
                     <div class="card-body d-flex justify-content-end gap-2">
 
                         
+                        <button class='btn btn-dark' id="downloadSample">Download Sample</button>
                         <button class='btn btn-dark' id="toViewDeptTable">View Database</button>
                     </div>
                 </div>
@@ -335,27 +246,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
         });
         
         document.getElementById('fileInput').addEventListener('change', function(e) {
-            var file = e.target.files[0];
-            var reader = new FileReader();
-            reader.readAsBinaryString(file);
-            reader.onload = function(e) {
-                var data = e.target.result;
-                var workbook = XLSX.read(data, { type: 'binary' });
-                var sheetName = workbook.SheetNames[0];
-                var sheet = workbook.Sheets[sheetName];
-                var htmlTable = XLSX.utils.sheet_to_html(sheet);
+    var file = e.target.files[0];
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var data = new Uint8Array(e.target.result);
+        var workbook = XLSX.read(data, { type: 'array' });
+        var sheetName = workbook.SheetNames[0];
+        var sheet = workbook.Sheets[sheetName];
+        var htmlTable = XLSX.utils.sheet_to_html(sheet);
+        document.getElementById('myTable').innerHTML = htmlTable;
+    };
+    reader.readAsArrayBuffer(file);
+});
 
-                document.getElementById('myTable').innerHTML = htmlTable;
-
-                // Calculate and update column 6 and column 11 values
-                updateCalculatedValues();
-            };
-        });
-
-        document.getElementById('updateDatabaseBtn').addEventListener('click', function() {
-    var sheetDate = document.getElementById('sheetDate').value; // Get selected sheet date
+document.getElementById('updateDatabaseBtn').addEventListener('click', function() {
+    var sheetDate = document.getElementById('sheetDate').value;
     var location = document.getElementById('locationSelect').value;
-    if (!location || location === "") {
+    if (!location) {
         alert('Please select a location.');
         return;
     }
@@ -363,25 +270,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
         alert('Please select a sheet date.');
         return;
     }
-
+    var workbookData = [];
+    var table = document.querySelector('#myTable table');
+    for (var i = 1, row; row = table.rows[i]; i++) {
+        var rowData = [];
+        for (var j = 0, col; col = row.cells[j]; j++) {
+            rowData.push(col.innerText);
+        }
+        workbookData.push(rowData);
+    }
     var formData = new FormData();
-    formData.append('file', document.getElementById('fileInput').files[0]);
-    formData.append('sheetDate', sheetDate); // Add sheet date to form data
+    formData.append('data', JSON.stringify(workbookData));
+    formData.append('sheetDate', sheetDate);
     formData.append('location', location);
 
-    fetch('index.php', { // Change the URL to index.php
+    fetch('', {
         method: 'POST',
         body: formData
     })
     .then(response => response.text())
     .then(data => {
-        alert(data); // Display the server response
+        alert(data);
     })
     .catch(error => {
         console.error('Error:', error);
         alert('Error updating database!');
     });
 });
+
 
 
 
@@ -407,6 +323,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
         var email = getUrlParameter('email');
         document.getElementById('userEmail').textContent = email;
     </script>
+    <script>
+        // Getting the department variable from PHP
+        var department = "<?php echo $department; ?>";
+
+        // Mapping of department to file names
+        var fileMapping = {
+            'SMS': 'sms.xlsx',
+            'NSPL': 'nspl.xlsx',
+            'SPM': 'spm.xlsx',
+            'RAILMILL': 'railmill.xlsx',
+            'PLATEMILL': 'platemill.xlsx',
+            'JLDC': 'jldc.xlsx',
+            'ADMIN': 'admin.xlsx'
+        };
+
+        document.getElementById('downloadSample').addEventListener('click', function() {
+            var fileName = fileMapping[department.toUpperCase()];
+
+            if (fileName) {
+                var link = document.createElement('a');
+                link.href = 'samplesheets/' + fileName;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                alert('No sample sheet available for the selected department.');
+            }
+        });
+    </script>
+    
 </body>
 
 </html>
