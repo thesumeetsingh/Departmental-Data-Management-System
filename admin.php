@@ -1,21 +1,17 @@
 <?php
 include 'supressError.php';
-session_start();
+session_start();// Start PHP session
 
-// Check if user is not logged in, redirect to login page
 if (!isset($_SESSION['username'])) {
     header("Location: login.php");
     exit();
 }
 
-// Get the user's email from the session
 $userName = $_SESSION['username'];
 $userEmail = $_SESSION['useremail'];
-$userDepartment = $_SESSION['dept'];
+$logdept = $_SESSION['dept'];
 
-// Check if the user is not an admin
-if ($userDepartment !== 'ADMIN') {
-    // Redirect to index.php with an alert prompt
+if ($logdept !== 'ADMIN') {
     echo "<script>
             alert('You are not an admin');
             window.location.href = 'index.php';
@@ -23,164 +19,97 @@ if ($userDepartment !== 'ADMIN') {
     exit();
 }
 
-// Set the timezone to Kolkata/Chennai
-date_default_timezone_set('Asia/Kolkata');
-
-// Check if data is posted
+// Check if the request method is POST (for AJAX requests)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Get the JSON data sent from the frontend
+    $requestData = json_decode(file_get_contents('php://input'), true);
+    $fromDate = $requestData['fromDate'];
+    $toDate = $requestData['toDate'];
+    $selectedDept = $requestData['selectedDept'];
+
+    // Validate the input data
+    if (!$fromDate || !$toDate || !$selectedDept) {
+        echo json_encode(['error' => 'Invalid input data']);
+        exit();
+    }
+
+    // Map departments to their corresponding table names
+    $tableMapping = [
+        'SMS' => 'sms',
+        'SPM' => 'spm',
+        'NSPL' => 'nspl',
+        'RAILMILL' => 'railmill',
+        'PLATEMILL' => 'platemill',
+        'JLDC' => 'jldc',
+        'ALL' => 'power_table'
+    ];
+
+    if (!isset($tableMapping[$selectedDept])) {
+        echo json_encode(['error' => 'Invalid department selected']);
+        exit();
+    }
+
+    $tableName = $tableMapping[$selectedDept];
+
     // Connect to MySQL database
     include 'connection.php';
 
-    // Get posted data
-    $data = json_decode(file_get_contents('php://input'), true);
-
-    // Extract the data
-    $sheetDate = $data['sheetDate'];
-    $location = $data['location'];
-    $updatingUser = $_SESSION['username'];
-    $currentDateTime = date("Y-m-d H:i:s");
-
-    try {
-        foreach ($data['rows'] as $row) {
-            $time = $row['A'];
-            $date = $sheetDate; // Use the selected sheet date
-            $powerGeneration = $row['C'];
-            $loadSechSMS2 = $row['D'];
-            $loadSechSMS3 = $row['E'];
-            $loadSechSMSTotal = $loadSechSMS2 + $loadSechSMS3;
-            $loadSechRailMill = $row['G'];
-            $loadSechPlateMill = $row['H'];
-            $loadSechSPM = $row['I'];
-            $loadSechNSPL = $row['J'];
-            $total = $loadSechSMSTotal + $loadSechRailMill + $loadSechPlateMill + $loadSechSPM + $loadSechNSPL;
-
-            // Check if a row with the same DATE and TIME already exists
-            $checkQuery = "SELECT * FROM power_table WHERE DATE = '$date' AND TIME = '$time'";
-            $checkResult = $conn->query($checkQuery);
-
-            if ($checkResult->num_rows > 0) {
-                // Update the existing row
-                $updateQuery = "UPDATE power_table SET 
-                                POWER_GENERATION = '$powerGeneration',
-                                LOAD_SECH_SMS2 = '$loadSechSMS2',
-                                LOAD_SECH_SMS3 = '$loadSechSMS3',
-                                LOAD_SECH_SMS_TOTAL = '$loadSechSMSTotal',
-                                LOAD_SECH_RAILMILL = '$loadSechRailMill',
-                                LOAD_SECH_PLATEMILL = '$loadSechPlateMill',
-                                LOAD_SECH_SPM = '$loadSechSPM',
-                                LOAD_SECH_NSPL = '$loadSechNSPL',
-                                TOTAL = '$total',
-                                UPDATEDBY = '$updatingUser',
-                                UPDATED_ON = '$currentDateTime',
-                                LOCATION = '$location'
-                                WHERE DATE = '$date' AND TIME = '$time'";
-                if ($conn->query($updateQuery) !== TRUE) {
-                    echo "Error updating record: " . $conn->error;
-                }
-            } else {
-                // Insert a new row
-                $insertQuery = "INSERT INTO power_table (TIME, DATE, POWER_GENERATION, LOAD_SECH_SMS2, LOAD_SECH_SMS3, LOAD_SECH_SMS_TOTAL, LOAD_SECH_RAILMILL, LOAD_SECH_PLATEMILL, LOAD_SECH_SPM, LOAD_SECH_NSPL, TOTAL, UPDATEDBY, UPDATED_ON, LOCATION) 
-                                VALUES ('$time', '$date', '$powerGeneration', '$loadSechSMS2', '$loadSechSMS3', '$loadSechSMSTotal', '$loadSechRailMill', '$loadSechPlateMill', '$loadSechSPM', '$loadSechNSPL', '$total', '$updatingUser', '$currentDateTime', '$location')";
-                if ($conn->query($insertQuery) !== TRUE) {
-                    echo "Error inserting record: " . $conn->error;
-                }
-            }
-
-            // Update or insert data into the specific tables based on the department
-            $tables = ['jldc', 'nspl', 'sms', 'spm', 'railmill', 'platemill'];
-            foreach ($tables as $table) {
-                $loadSechColumn = '';
-                $deptValue = '';
-                switch ($table) {
-                    case 'jldc':
-                        $loadSechColumn = 'POWER_GENERATION';
-                        $deptValue = $powerGeneration;
-                        break;
-                    case 'nspl':
-                        $loadSechColumn = 'LOADSECH';
-                        $deptValue = $loadSechNSPL;
-                        break;
-                    case 'sms':
-                        $loadSechColumn = 'LOADSECH_SMS2';
-                        $deptValue = $loadSechSMS2;
-                        $loadSechColumn2 = 'LOADSECH_SMS3';
-                        $deptValue2 = $loadSechSMS3;
-                        break;
-                    case 'spm':
-                        $loadSechColumn = 'LOADSECH';
-                        $deptValue = $loadSechSPM;
-                        break;
-                    case 'railmill':
-                        $loadSechColumn = 'LOADSECH';
-                        $deptValue = $loadSechRailMill;
-                        break;
-                    case 'platemill':
-                        $loadSechColumn = 'LOADSECH';
-                        $deptValue = $loadSechPlateMill;
-                        break;
-                }
-
-                if ($table == 'sms') {
-                    $checkTableQuery = "SELECT * FROM $table WHERE DATE = '$date' AND TIME = '$time'";
-                    $checkTableResult = $conn->query($checkTableQuery);
-
-                    if ($checkTableResult->num_rows > 0) {
-                        // Update the existing row
-                        $updateTableQuery = "UPDATE $table SET 
-                                        LOADSECH_SMS2 = '$loadSechSMS2',
-                                        LOADSECH_SMS3 = '$loadSechSMS3',
-                                        UPDATEDBY = '$updatingUser',
-                                        UPDATED_ON = '$currentDateTime',
-                                        LOCATION = '$location'
-                                        WHERE DATE = '$date' AND TIME = '$time'";
-                        if ($conn->query($updateTableQuery) !== TRUE) {
-                            echo "Error updating record: " . $conn->error;
-                        }
-                    } else {
-                        // Insert a new row
-                        $insertQuery = "INSERT INTO $table (TIME, DATE, LOADSECH_SMS2, LOADSECH_SMS3, UPDATEDBY, UPDATED_ON, LOCATION) 
-                                        VALUES ('$time', '$date', '$loadSechSMS2', '$loadSechSMS3', '$updatingUser', '$currentDateTime', '$location')";
-                        if ($conn->query($insertQuery) !== TRUE) {
-                            echo "Error inserting record: " . $conn->error;
-                        }
-                    }
-                } else {
-                    $checkTableQuery = "SELECT * FROM $table WHERE DATE = '$date' AND TIME = '$time'";
-                    $checkTableResult = $conn->query($checkTableQuery);
-
-                    if ($checkTableResult->num_rows > 0) {
-                        // Update the existing row
-                        $updateTableQuery = "UPDATE $table SET 
-                                        $loadSechColumn = '$deptValue',
-                                        UPDATEDBY = '$updatingUser',
-                                        UPDATED_ON = '$currentDateTime',
-                                        LOCATION = '$location'
-                                        WHERE DATE = '$date' AND TIME = '$time'";
-                        if ($conn->query($updateTableQuery) !== TRUE) {
-                            echo "Error updating record: " . $conn->error;
-                        }
-                    } else {
-                        // Insert a new row
-                        $insertQuery = "INSERT INTO $table (TIME, DATE, $loadSechColumn, UPDATEDBY, UPDATED_ON, LOCATION) 
-                                        VALUES ('$time', '$date', '$deptValue', '$updatingUser', '$currentDateTime', '$location')";
-                        if ($conn->query($insertQuery) !== TRUE) {
-                            echo "Error inserting record: " . $conn->error;
-                        }
-                    }
-                }
-            }
-        }
-        echo "Data updated successfully!";
+    $updationQuery = "UPDATE power_table
+        SET 
+            LOAD_SECH_SMS_TOTAL = LOAD_SECH_SMS2 + LOAD_SECH_SMS3,
+            TOTAL = LOAD_SECH_SMS2 + LOAD_SECH_SMS3 + LOAD_SECH_RAILMILL + LOAD_SECH_PLATEMILL + LOAD_SECH_SPM + LOAD_SECH_NSPL";
+    if (!$conn->query($updationQuery)) {
+        echo json_encode(['error' => 'Failed to update totals: ' . $conn->error]);
         exit();
-    } catch (Exception $e) {
-        echo 'Error: ' . $e->getMessage();
     }
+
+    // Determine the columns to query based on department
+    if ($selectedDept === 'ALL') {
+        $columns = ['TIME', 'DATE', 'POWER_GENERATION', 'LOAD_SECH_SMS2', 'LOAD_SECH_SMS3', 'LOAD_SECH_SMS_TOTAL', 'LOAD_SECH_RAILMILL', 'LOAD_SECH_PLATEMILL', 'LOAD_SECH_SPM', 'LOAD_SECH_NSPL', 'TOTAL'];
+    } elseif ($selectedDept === 'JLDC') {
+        $columns = ['TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+    } elseif ($selectedDept === 'SMS') {
+        $columns = ['TIME', 'DATE', 'LOADSECH_SMS2', 'LOADSECH_SMS3', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+    } else {
+        $columns = ['TIME', 'DATE', 'LOADSECH', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+    }
+
+    // Prepare and execute the query
+    $columnString = implode(", ", $columns);
+    $stmt = $conn->prepare("SELECT $columnString FROM $tableName WHERE DATE BETWEEN ? AND ? ORDER BY DATE,TIME ASC");
+    if ($stmt === false) {
+        echo json_encode(['error' => 'Failed to prepare statement: ' . $conn->error]);
+        exit();
+    }
+
+    $stmt->bind_param("ss", $fromDate, $toDate);
+    if (!$stmt->execute()) {
+        echo json_encode(['error' => 'Failed to execute query: ' . $stmt->error]);
+        exit();
+    }
+
+    $result = $stmt->get_result();
+    if ($result === false) {
+        echo json_encode(['error' => 'Failed to get result: ' . $stmt->error]);
+        exit();
+    }
+
+    // Fetch data and send it back as JSON
+    $data = [];
+    while ($row = $result->fetch_assoc()) {
+        $data[] = $row;
+    }
+
+    echo json_encode($data);
+
     // Close database connection
+    $stmt->close();
     $conn->close();
-} else {
-    // Redirect the user back to the same page without any warning 
+    exit(); // Stop further execution after handling the AJAX request
 }
+
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
