@@ -1,5 +1,5 @@
 <?php
-include 'supressError.php';
+include 'suppressError.php';
 session_start();
 
 if (!isset($_SESSION['username'])) {
@@ -9,6 +9,7 @@ if (!isset($_SESSION['username'])) {
 
 $userName = $_SESSION['username'];
 $department = $_SESSION['dept'];
+$deptTitle=strtoupper($department);
 $userEmail = $_SESSION['useremail'];
 include 'connection.php';
 date_default_timezone_set('Asia/Kolkata');
@@ -23,14 +24,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach ($data as $row) {
             $time = $row[0];
             $departmentValue = $row[2];
-            $loadsechColumn = ($department === 'JLDC') ? 'POWER_GENERATION' : 'LOADSECH';
+	    $departmentValue = !empty($departmentValue) ? $departmentValue : 0;
 
+            $loadsechColumn = ($department === 'JLDC') ? 'POWER_GENERATION' : 'LOADSECH';
+	
             $checkDeptSql = "SELECT * FROM $department WHERE DATE='$sheetDate' AND TIME='$time'";
             $checkDeptResult = $conn->query($checkDeptSql);
-
+	
             if ($checkDeptResult->num_rows > 0) {
                 if ($department === 'SMS') {
                     $departmentValue2 = $row[3];
+                    $departmentValue2 = !empty($departmentValue2) ? $departmentValue2 : 0;
                     $deptSql = "UPDATE $department SET LOADSECH_SMS2='$departmentValue', LOADSECH_SMS3='$departmentValue2', UPDATEDBY='$updatinguser', UPDATED_ON='$currentDateTime', LOCATION='$location' WHERE DATE='$sheetDate' AND TIME='$time'";
                 } else {
                     $deptSql = "UPDATE $department SET $loadsechColumn='$departmentValue', UPDATEDBY='$updatinguser', UPDATED_ON='$currentDateTime', LOCATION='$location' WHERE DATE='$sheetDate' AND TIME='$time'";
@@ -38,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 if ($department === 'SMS') {
                     $departmentValue2 = $row[3];
+		    $departmentValue2 = !empty($departmentValue2) ? $departmentValue2 : 0;
                     $deptSql = "INSERT INTO $department (TIME, DATE, LOADSECH_SMS2, LOADSECH_SMS3, UPDATEDBY, UPDATED_ON, LOCATION) 
                                 VALUES ('$time', '$sheetDate', '$departmentValue', '$departmentValue2', '$updatinguser', '$currentDateTime', '$location')";
                 } else {
@@ -105,9 +110,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         echo "Data inserted successfully";
-        exit();
+	exit();
     } else {
-        //echo "Invalid request";
+        echo "Invalid request";
     }
 
     $conn->close();
@@ -123,7 +128,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Portal</title>
+    <title>Web Portal | <?php echo $deptTitle ?></title>
+<link rel="icon" type="image/x-icon" href="/images/favicon.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
@@ -170,17 +176,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo02" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse " id="navbarTogglerDemo02">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fa-solid fa-user"></i> <?php echo $userEmail; ?></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
+            <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
+    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+            <a class="nav-link" href="#"><i class="fa-solid fa-user"></i> <?php echo $userEmail; ?></a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+        </li>
+    </ul>
+</div>
     </nav>
 
     <div class="container-fluid">
@@ -195,7 +200,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card mb-2" style="background: rgb(177,176,160); background: linear-gradient(90deg, rgba(177,176,160,1) 0%, rgba(236,177,109,1) 100%); border: none;">
                     <div class="card-body d-flex justify-content-end gap-2">
 
-                        
                         <button class='btn btn-dark' id="downloadSample">Download Sample</button>
                         <button class='btn btn-dark' id="toViewDeptTable">View Database</button>
                     </div>
@@ -324,7 +328,7 @@ document.getElementById('updateDatabaseBtn').addEventListener('click', function(
         var email = getUrlParameter('email');
         document.getElementById('userEmail').textContent = email;
     </script>
-    <script>
+<script>
         // Getting the department variable from PHP
         var department = "<?php echo $department; ?>";
 
@@ -354,7 +358,6 @@ document.getElementById('updateDatabaseBtn').addEventListener('click', function(
             }
         });
     </script>
-    
 </body>
 
 </html>
