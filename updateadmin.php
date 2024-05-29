@@ -1,5 +1,5 @@
 <?php
-include 'supressError.php';
+include 'suppressError.php';
 session_start();
 
 if (!isset($_SESSION['username'])) {
@@ -36,13 +36,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data'])) {
             $time = $row['A'];
             $date = $sheetDate;
             $powerGeneration = $row['C'];
+$powerGeneration = !empty($powerGeneration) ? $powerGeneration : 0;
+
+
             $loadSechSMS2 = $row['D'];
+$loadSechSMS2 = !empty($loadSechSMS2) ? $loadSechSMS2 : 0;
             $loadSechSMS3 = $row['E'];
+$loadSechSMS3 = !empty($loadSechSMS3) ? $loadSechSMS3 : 0;
+
             $loadSechSMSTotal = $row['D'] + $row['E'];
             $loadSechRailMill = $row['G'];
+$loadSechRailMill = !empty($loadSechRailMill) ? $loadSechRailMill : 0;
+
             $loadSechPlateMill = $row['H'];
+$loadSechPlateMill = !empty($loadSechPlateMill) ? $loadSechPlateMill : 0;
+
             $loadSechSPM = $row['I'];
+$loadSechSPM = !empty($loadSechSPM) ? $loadSechSPM : 0;
+
             $loadSechNSPL = $row['J'];
+$loadSechNSPL = !empty($loadSechNSPL) ? $loadSechNSPL : 0;
+
             $total = $loadSechSMS2 + $loadSechSMS3 + $loadSechRailMill + $loadSechPlateMill + $loadSechSPM + $loadSechNSPL;
 
             $checkQuery = "SELECT * FROM power_table WHERE DATE = '$date' AND TIME = '$time'";
@@ -146,7 +160,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Portal</title>
+    <title>Web Portal | Admin</title>
+<link rel="icon" type="image/x-icon" href="/images/favicon.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
@@ -218,7 +233,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data'])) {
                 <div class="card mb-2" style="background: rgb(177,176,160); background: linear-gradient(90deg, rgba(177,176,160,1) 0%, rgba(236,177,109,1) 100%); border: none;">
                     <div class="card-body d-flex justify-content-end gap-2">
 
-                    <button class='btn btn-dark' id="downloadSample">Download Sample</button>
+			<button class='btn btn-dark' id="downloadSample">Download Sample</button>
                         <!-- Export to Excel button -->
                         <button type="button" class="btn btn-dark" id="toViewDB">View Database</button>
 
@@ -360,10 +375,11 @@ function updateCalculatedValues() {
 
         // Calculate values for column 6 and column 11
         var col6 = col4 + col5;
-        var col11 = (( parseInt(row.cells[4].textContent)) + (parseInt(row.cells[5].textContent)) + (parseInt(row.cells[7].textContent))+ (parseInt(row.cells[8].textContent))+ (parseInt(row.cells[9].textContent))+ (parseInt(row.cells[10].textContent)));
+        var col11 = col4 + col5 + col7 + col8 + col9 + col10;
 
         // Update the cells in the row with calculated values
-
+        row.cells[5].textContent = col6;
+        row.cells[10].textContent = col11;
     }
 }
 </script>
@@ -388,8 +404,8 @@ function updateCalculatedValues() {
         var email = getUrlParameter('email');
         document.getElementById('userEmail').textContent = email;
     </script>
-        <script>
-  document.getElementById('downloadSample').addEventListener('click', function() {
+<script>
+        document.getElementById('downloadSample').addEventListener('click', function() {
             var fileName = 'admin.xlsx';
             var filePath = 'samplesheets/' + fileName;
 
@@ -400,8 +416,7 @@ function updateCalculatedValues() {
             link.click();
             document.body.removeChild(link);
         });
-
-</script>
+    </script>
 </body>
 
 </html>
