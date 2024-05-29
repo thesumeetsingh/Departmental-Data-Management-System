@@ -1,5 +1,6 @@
 <?php
-include 'supressError.php';
+include 'suppressError.php';
+
 // Create connection
 include 'connection.php';
 // Check if form is submitted
@@ -53,6 +54,7 @@ $conn->close();
 
 <head>
     <title>Signup</title>
+<link rel="icon" type="image/x-icon" href="/images/favicon.png">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -144,7 +146,7 @@ $conn->close();
                                         <option value="SPM">SPM</option>
                                         <option value="NSPL">NSPL</option>
                                         <option value="JLDC">JLDC</option>
-                                        <option value="ADMIN">ADMIN</option>
+                                       
                                     </select>
                                 </div>
                                 <div class="form-group">
