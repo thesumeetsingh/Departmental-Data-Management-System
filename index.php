@@ -27,11 +27,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $location = $_POST['location'];
         $updatinguser = $userName;
         $currentDateTime = date("Y-m-d H:i:s");
-
+        // Function to sanitize values
+        function sanitizeValue($value) {
+            return (isset($value) && is_numeric($value)) ? $value : 0;
+        }
         foreach ($data as $row) {
             $time = $row[0];
-            $departmentValue = $row[1];
-	    $departmentValue = !empty($departmentValue) ? $departmentValue : 0;
+            $departmentValue = sanitizeValue($row[1]);
 
             $loadsechColumn = ($department === 'JLDC') ? 'POWER_GENERATION' : 'LOADSECH';
 	
@@ -40,16 +42,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	
             if ($checkDeptResult->num_rows > 0) {
                 if ($department === 'SMS') {
-                    $departmentValue2 = $row[2];
-                    $departmentValue2 = !empty($departmentValue2) ? $departmentValue2 : 0;
+                    $departmentValue2 = sanitizeValue($row[2]);
                     $deptSql = "UPDATE $department SET LOADSECH_SMS2='$departmentValue', LOADSECH_SMS3='$departmentValue2', UPDATEDBY='$updatinguser', UPDATED_ON='$currentDateTime', LOCATION='$location' WHERE DATE='$sheetDate' AND TIME='$time'";
                 } else {
                     $deptSql = "UPDATE $department SET $loadsechColumn='$departmentValue', UPDATEDBY='$updatinguser', UPDATED_ON='$currentDateTime', LOCATION='$location' WHERE DATE='$sheetDate' AND TIME='$time'";
                 }
             } else {
                 if ($department === 'SMS') {
-                    $departmentValue2 = $row[2];
-		    $departmentValue2 = !empty($departmentValue2) ? $departmentValue2 : 0;
+                    $departmentValue2 = sanitizeValue($row[2]);
                     $deptSql = "INSERT INTO $department (TIME, DATE, LOADSECH_SMS2, LOADSECH_SMS3, UPDATEDBY, UPDATED_ON, LOCATION) 
                                 VALUES ('$time', '$sheetDate', '$departmentValue', '$departmentValue2', '$updatinguser', '$currentDateTime', '$location')";
                 } else {

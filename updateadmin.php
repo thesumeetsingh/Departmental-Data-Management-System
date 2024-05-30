@@ -30,33 +30,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data'])) {
     $updatingUser = $_SESSION['username'];
     $currentDateTime = date("Y-m-d H:i:s");
     $rows = $data['rows'];
-
+    function sanitizeValue($value) {
+        return is_numeric($value) ? $value : 0;
+    }
     try {
         foreach ($rows as $row) {
             $time = $row['A'];
             $date = $sheetDate;
-            $powerGeneration = $row['B'];
-$powerGeneration = !empty($powerGeneration) ? $powerGeneration : 0;
+            $powerGeneration = sanitizeValue($row['B']);
+            $loadSechSMS2 = sanitizeValue($row['C']);
+            $loadSechSMS3 = sanitizeValue($row['D']);
+            $loadSechRailMill = sanitizeValue($row['F']);
+            $loadSechPlateMill = sanitizeValue($row['G']);
+            $loadSechSPM = sanitizeValue($row['H']);
+            $loadSechNSPL = sanitizeValue($row['I']);
 
-
-            $loadSechSMS2 = $row['C'];
-$loadSechSMS2 = !empty($loadSechSMS2) ? $loadSechSMS2 : 0;
-            $loadSechSMS3 = $row['D'];
-$loadSechSMS3 = !empty($loadSechSMS3) ? $loadSechSMS3 : 0;
-
-            $loadSechSMSTotal = $row['C'] + $row['D'];
-            $loadSechRailMill = $row['F'];
-$loadSechRailMill = !empty($loadSechRailMill) ? $loadSechRailMill : 0;
-
-            $loadSechPlateMill = $row['G'];
-$loadSechPlateMill = !empty($loadSechPlateMill) ? $loadSechPlateMill : 0;
-
-            $loadSechSPM = $row['H'];
-$loadSechSPM = !empty($loadSechSPM) ? $loadSechSPM : 0;
-
-            $loadSechNSPL = $row['I'];
-$loadSechNSPL = !empty($loadSechNSPL) ? $loadSechNSPL : 0;
-
+            $loadSechSMSTotal = $loadSechSMS2 + $loadSechSMS3;
             $total = $loadSechSMS2 + $loadSechSMS3 + $loadSechRailMill + $loadSechPlateMill + $loadSechSPM + $loadSechNSPL;
 
             $checkQuery = "SELECT * FROM power_table WHERE DATE = '$date' AND TIME = '$time'";
