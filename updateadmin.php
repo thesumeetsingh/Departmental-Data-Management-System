@@ -294,14 +294,27 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
         var workbook = XLSX.read(data, { type: 'binary' });
         var sheetName = workbook.SheetNames[0];
         var sheet = workbook.Sheets[sheetName];
+        // var htmlTable = XLSX.utils.sheet_to_html(sheet);
+        // document.getElementById('myTable').innerHTML = htmlTable;
+        var firstRow = XLSX.utils.sheet_to_json(sheet, { header: 1 })[0];
+        var valid = validateColumns(firstRow);
+        if(valid){
         var htmlTable = XLSX.utils.sheet_to_html(sheet);
-
         document.getElementById('myTable').innerHTML = htmlTable;
+        }
+        else{
+                    alert('Invalid columns for the admin upload.');
+                    document.getElementById('tableContainer').innerHTML = '';
+                }
 
         // Calculate and update column 6 and column 11 values
         updateCalculatedValues();
     };
 });
+function validateColumns(columns) {
+            var requiredColumns = ['TIME (HRS)', 'POWER GENERATION', 'LOAD SECHDULE SMS (MW)', 'LOAD SECHDULE RAILMILL (MW)', 'LOAD SECHDULE PLATEMILL (MW)', 'LOAD SECHDULE SPM (MW)', 'LOAD SECHDULE NSPL (MW)'];
+            return requiredColumns.every(col => columns.includes(col));
+        }
 
 document.getElementById('updateDatabaseBtn').addEventListener('click', function() {
     var sheetDate = document.getElementById('sheetDate').value;

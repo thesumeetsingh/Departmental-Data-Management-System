@@ -260,10 +260,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         var sheet = workbook.Sheets[sheetName];
         var htmlTable = XLSX.utils.sheet_to_html(sheet);
         document.getElementById('myTable').innerHTML = htmlTable;
+
+        //validate columns
+        var firstRow = XLSX.utils.sheet_to_json(sheet, { header: 1 })[0];
+        var department = "<?php echo $department; ?>";  
+        var valid = validateColumns(firstRow, department); 
+        if (!valid) {
+                    alert('Invalid columns for the selected department.');
+                    document.getElementById('myTable').innerHTML = '';
+                }  
     };
     reader.readAsArrayBuffer(file);
 });
-
+function validateColumns(columns, department) {
+            var validColumns = {
+                'SMS': ['TIME (HRS)', 'LOAD SECHDULE SMS2 (MW)', 'LOAD SECHDULE SMS3 (MW)'],
+                'NSPL': ['TIME (HRS)', 'LOAD SECHDULE NSPL (MW)'],
+                'JLDC': ['TIME (HRS)', 'POWER GENERATION (JLDC)',],
+                'SPM': ['TIME (HRS)', 'LOAD SECHDULE SPM (MW)'],
+                'RAILMILL': ['TIME (HRS)', 'LOAD SECHDULE RAILMILL (MW)'],
+                'PLATEMILL': ['TIME (HRS)', 'LOAD SECHDULE PLATEMILL (MW)'],
+            };
+            var requiredColumns = validColumns[department.toUpperCase()];
+            return requiredColumns.every(col => columns.includes(col));
+        }
 document.getElementById('updateDatabaseBtn').addEventListener('click', function() {
     var sheetDate = document.getElementById('sheetDate').value;
     var location = document.getElementById('locationSelect').value;
