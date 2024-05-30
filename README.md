@@ -21,7 +21,6 @@ The Departmental Data Management System (DDMS) is a full-stack web application d
     - Full access to manage the data across the organization.
 
 - **Excel File Handling:**
-  - Use PHPExcel to convert Excel files to web pages and update the database.
   - User-friendly interface to upload and view data.
 
 ## Web Pages
@@ -46,7 +45,6 @@ The Departmental Data Management System (DDMS) is a full-stack web application d
 - **Frontend:** HTML, CSS, JavaScript
 - **Backend:** PHP
 - **Database:** MySQL
-- **Libraries:** PHPExcel for Excel file handling
 - **Session Management:** PHP sessions for secure login
 
 ## Setup Instructions
