@@ -7,6 +7,13 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
+if($_SESSION['dept']=='ADMIN'){
+    echo "<script>
+            alert('You are an admin');
+            window.location.href = 'admin.php';
+          </script>";
+}
+
 $userName = $_SESSION['username'];
 $department = $_SESSION['dept'];
 $deptTitle=strtoupper($department);
