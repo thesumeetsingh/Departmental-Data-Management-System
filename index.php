@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         foreach ($data as $row) {
             $time = $row[0];
-            $departmentValue = $row[2];
+            $departmentValue = $row[1];
 	    $departmentValue = !empty($departmentValue) ? $departmentValue : 0;
 
             $loadsechColumn = ($department === 'JLDC') ? 'POWER_GENERATION' : 'LOADSECH';
@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	
             if ($checkDeptResult->num_rows > 0) {
                 if ($department === 'SMS') {
-                    $departmentValue2 = $row[3];
+                    $departmentValue2 = $row[2];
                     $departmentValue2 = !empty($departmentValue2) ? $departmentValue2 : 0;
                     $deptSql = "UPDATE $department SET LOADSECH_SMS2='$departmentValue', LOADSECH_SMS3='$departmentValue2', UPDATEDBY='$updatinguser', UPDATED_ON='$currentDateTime', LOCATION='$location' WHERE DATE='$sheetDate' AND TIME='$time'";
                 } else {
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             } else {
                 if ($department === 'SMS') {
-                    $departmentValue2 = $row[3];
+                    $departmentValue2 = $row[2];
 		    $departmentValue2 = !empty($departmentValue2) ? $departmentValue2 : 0;
                     $deptSql = "INSERT INTO $department (TIME, DATE, LOADSECH_SMS2, LOADSECH_SMS3, UPDATEDBY, UPDATED_ON, LOCATION) 
                                 VALUES ('$time', '$sheetDate', '$departmentValue', '$departmentValue2', '$updatinguser', '$currentDateTime', '$location')";

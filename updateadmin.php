@@ -35,26 +35,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data'])) {
         foreach ($rows as $row) {
             $time = $row['A'];
             $date = $sheetDate;
-            $powerGeneration = $row['C'];
+            $powerGeneration = $row['B'];
 $powerGeneration = !empty($powerGeneration) ? $powerGeneration : 0;
 
 
-            $loadSechSMS2 = $row['D'];
+            $loadSechSMS2 = $row['C'];
 $loadSechSMS2 = !empty($loadSechSMS2) ? $loadSechSMS2 : 0;
-            $loadSechSMS3 = $row['E'];
+            $loadSechSMS3 = $row['D'];
 $loadSechSMS3 = !empty($loadSechSMS3) ? $loadSechSMS3 : 0;
 
-            $loadSechSMSTotal = $row['D'] + $row['E'];
-            $loadSechRailMill = $row['G'];
+            $loadSechSMSTotal = $row['C'] + $row['D'];
+            $loadSechRailMill = $row['F'];
 $loadSechRailMill = !empty($loadSechRailMill) ? $loadSechRailMill : 0;
 
-            $loadSechPlateMill = $row['H'];
+            $loadSechPlateMill = $row['G'];
 $loadSechPlateMill = !empty($loadSechPlateMill) ? $loadSechPlateMill : 0;
 
-            $loadSechSPM = $row['I'];
+            $loadSechSPM = $row['H'];
 $loadSechSPM = !empty($loadSechSPM) ? $loadSechSPM : 0;
 
-            $loadSechNSPL = $row['J'];
+            $loadSechNSPL = $row['I'];
 $loadSechNSPL = !empty($loadSechNSPL) ? $loadSechNSPL : 0;
 
             $total = $loadSechSMS2 + $loadSechSMS3 + $loadSechRailMill + $loadSechPlateMill + $loadSechSPM + $loadSechNSPL;
@@ -331,13 +331,13 @@ document.getElementById('updateDatabaseBtn').addEventListener('click', function(
         for (var i = 2; i < jsonData.length; i++) {
             var row = {};
             row.A = jsonData[i][0] || ''; // Assuming A is the time column
-            row.C = jsonData[i][2] || ''; // Assuming C is the power generation column
-            row.D = jsonData[i][3] || ''; // Assuming D is the load sech sms 2 column
-            row.E = jsonData[i][4] || ''; // Assuming E is the load sech sms 3 column
-            row.G = jsonData[i][6] || ''; // Assuming G is the load sech rail mill column
-            row.H = jsonData[i][7] || ''; // Assuming H is the load sech plate mill column
-            row.I = jsonData[i][8] || ''; // Assuming I is the load sech spm column
-            row.J = jsonData[i][9] || ''; // Assuming J is the load sech nspl column
+            row.B = jsonData[i][1] || ''; // Assuming C is the power generation column
+            row.C = jsonData[i][2] || ''; // Assuming D is the load sech sms 2 column
+            row.D = jsonData[i][3] || ''; // Assuming E is the load sech sms 3 column
+            row.F = jsonData[i][5] || ''; // Assuming G is the load sech rail mill column
+            row.G = jsonData[i][6] || ''; // Assuming H is the load sech plate mill column
+            row.H = jsonData[i][7] || ''; // Assuming I is the load sech spm column
+            row.I = jsonData[i][8] || ''; // Assuming J is the load sech nspl column
             rows.push(row);
         }
         var formData = new FormData();
@@ -366,20 +366,20 @@ function updateCalculatedValues() {
     // Start from row 3 as the first two rows are header rows
     for (var i = 2; i < rows.length; i++) {
         var row = rows[i];
-        var col4 = parseInt(row.cells[3].textContent) || 0; // Value in column 4
-        var col5 = parseInt(row.cells[4].textContent) || 0; // Value in column 5
-        var col7 = parseInt(row.cells[6].textContent) || 0; // Value in column 7
-        var col8 = parseInt(row.cells[7].textContent) || 0; // Value in column 8
-        var col9 = parseInt(row.cells[8].textContent) || 0; // Value in column 9
-        var col10 = parseInt(row.cells[9].textContent) || 0; // Value in column 10
+        var col3 = parseInt(row.cells[2].textContent) || 0; // Value in column 4
+        var col4 = parseInt(row.cells[3].textContent) || 0; // Value in column 5
+        var col6 = parseInt(row.cells[4].textContent) || 0; // Value in column 7
+        var col7 = parseInt(row.cells[6].textContent) || 0; // Value in column 8
+        var col8 = parseInt(row.cells[7].textContent) || 0; // Value in column 9
+        var col9 = parseInt(row.cells[8].textContent) || 0; // Value in column 10
 
         // Calculate values for column 6 and column 11
-        var col6 = col4 + col5;
-        var col11 = col4 + col5 + col7 + col8 + col9 + col10;
+        var col5 = col3 + col4;
+        var col10 = col3 + col4 + col6 + col7 + col8 + col9;
 
         // Update the cells in the row with calculated values
-        row.cells[5].textContent = col6;
-        row.cells[10].textContent = col11;
+        row.cells[4].textContent = col5;
+        row.cells[9].textContent = col10;
     }
 }
 </script>
