@@ -15,6 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $age = $_POST['age'];
     $gender = $_POST['gender'];
     $department = $_POST['department']; // Added department variable
+    $userLocation=$_POST['userLocation'];
 
     // Check if username already exists
     $stmt = $conn->prepare("SELECT * FROM user_details WHERE USERNAME = ?");
@@ -28,8 +29,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit; // Stop further execution after redirection
     } else {
         // Insert user details into the database
-        $stmt = $conn->prepare("INSERT INTO user_details (FIRSTNAME, LASTNAME, USERNAME, PASSWORD, EMAILADD, PHONENUMBER, AGE, GENDER, DEPT) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssssssiss", $firstName, $lastName, $username, $password, $email, $phone, $age, $gender, $department); // Added department binding
+        $stmt = $conn->prepare("INSERT INTO user_details (FIRSTNAME, LASTNAME, USERNAME, PASSWORD, EMAILADD, PHONENUMBER, AGE, GENDER, DEPT, USERLOCATION) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?)");
+        $stmt->bind_param("ssssssisss", $firstName, $lastName, $username, $password, $email, $phone, $age, $gender, $department, $userLocation); // Added department binding
         
         if ($stmt->execute()) {
             echo '<script>alert("User registered successfully.");</script>';
@@ -149,6 +150,17 @@ $conn->close();
                                        
                                     </select>
                                 </div>
+                                <div class="form-group mb-3">
+                                    <label class="label" for="userLocation">Location</label>
+                                    <select id="userLocation" name="userLocation" class="form-control" required>
+                                        <option value="">Select Location</option>
+                                        <option value="RAIGARH">RAIGARH</option>
+                                        <option value="TAMNAR">TAMNAR</option>
+                                        <option value="ANGUL">ANGUL</option>
+                                        <option value="PATRATU">PATRATU</option>
+                                        <option value="NSPL">NSPL</option>          
+                                    </select>
+                                </div>
                                 <div class="form-group">
                                     <button type="submit" class="form-control btn btn-primary rounded submit px-3">Sign Up</button>
                                 </div>
@@ -184,6 +196,7 @@ function validateForm() {
             var password = document.getElementById("password").value;
             var confirmPassword = document.getElementById("confirmPassword").value;
             var department = document.getElementById("department").value;
+            var userLocation = document.getElementById("userLocation").value;
 
             // Validate first name and last name (should not contain numbers)
             var nameRegex = /^[a-zA-Z\s]*$/;
@@ -215,6 +228,11 @@ function validateForm() {
             // Validate department selection
             if (department === "") {
                 alert("Please select a department.");
+                return false;
+            }
+
+            if (userLocation === "") {
+                alert("Please select a Location.");
                 return false;
             }
 
