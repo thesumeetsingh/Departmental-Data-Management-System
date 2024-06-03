@@ -26,9 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fromDate = $requestData['fromDate'];
     $toDate = $requestData['toDate'];
     $selectedDept = $requestData['selectedDept'];
+    $selectedLocation= $requestData['selectedLocation'];
 
     // Validate the input data
-    if (!$fromDate || !$toDate || !$selectedDept) {
+    if (!$fromDate || !$toDate || !$selectedDept || !$selectedLocation) {
         echo json_encode(['error' => 'Invalid input data']);
         exit();
     }
@@ -65,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Determine the columns to query based on department
     if ($selectedDept === 'ALL') {
-        $columns = ['TIME', 'DATE', 'POWER_GENERATION', 'LOAD_SECH_SMS2', 'LOAD_SECH_SMS3', 'LOAD_SECH_SMS_TOTAL', 'LOAD_SECH_RAILMILL', 'LOAD_SECH_PLATEMILL', 'LOAD_SECH_SPM', 'LOAD_SECH_NSPL', 'TOTAL'];
+        $columns = ['TIME', 'DATE', 'POWER_GENERATION', 'LOAD_SECH_SMS2', 'LOAD_SECH_SMS3', 'LOAD_SECH_SMS_TOTAL', 'LOAD_SECH_RAILMILL', 'LOAD_SECH_PLATEMILL', 'LOAD_SECH_SPM', 'LOAD_SECH_NSPL', 'TOTAL','LOCATION'];
     } elseif ($selectedDept === 'JLDC') {
         $columns = ['TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
     } elseif ($selectedDept === 'SMS') {
@@ -76,17 +77,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Prepare and execute the query
     $columnString = implode(", ", $columns);
-    $stmt = $conn->prepare("SELECT $columnString FROM $tableName WHERE DATE BETWEEN ? AND ? ORDER BY DATE,TIME ASC");
+    $stmt = $conn->prepare("SELECT $columnString FROM $tableName WHERE DATE BETWEEN ? AND ? AND LOCATION = ? ORDER BY DATE,TIME ASC");
     if ($stmt === false) {
         echo json_encode(['error' => 'Failed to prepare statement: ' . $conn->error]);
         exit();
     }
 
-    $stmt->bind_param("ss", $fromDate, $toDate);
+    $stmt->bind_param("sss", $fromDate, $toDate, $selectedLocation);
     if (!$stmt->execute()) {
         echo json_encode(['error' => 'Failed to execute query: ' . $stmt->error]);
         exit();
     }
+
 
     $result = $stmt->get_result();
     if ($result === false) {
@@ -200,7 +202,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <option value="JLDC">JLDC</option>
                     </select>
                 </div>
-                <div class="col-md-2"></div>
+                <div class="col-md-2">
+                    <label for="selectLocation" class="form-label"><b>Location:</b></label>
+                    <select name="selectLocation" id="selectLocation" class="form-control " required>
+                        <option value="">Select Location</option>
+                        <option value="RAIGARH">RAIGARH</option>
+                        <option value="ANGUL">ANGUL</option>
+                        <option value="PATRATU">PATRATU</option>
+                        <option value="TAMNAR">TAMNAR</option>
+                        <option value="NSPL">NSPL</option>
+                    </select>
+                </div>
+                <!-- <div class="col-md-2"></div> -->
                 <div class="btn-group col-md-4">
                     <button type="button" class="btn btn-primary" style=" width:20px;" id="searchBtn"><i class="fa fa-search"></i></button>
                     <button type="button" class="btn btn-dark" style=" width:200px;"id="exportBtn"> <i class="fa fa-file-excel-o" aria-hidden="true"></i>Export to Excel </button>
@@ -237,10 +250,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         });
 
         // Handle click on Search button
-        document.getElementById('searchBtn').addEventListener('click', function() {
+document.getElementById('searchBtn').addEventListener('click', function() {
     var fromDate = document.getElementById('fromDate').value;
     var toDate = document.getElementById('toDate').value;
     var selectedDept = document.getElementById('selectedDept').value;
+    var selectedLocation = document.getElementById('selectLocation').value;  // Get the selected location
 
     if (!fromDate || !toDate) {
         alert('Select both From Date and To Date.');
@@ -250,13 +264,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         alert('From Date should be before To Date.');
         return;
     }
+    if (!selectedLocation) {
+        alert('Please select a location.');
+        return;
+    }
 
     fetch('admin.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ fromDate: fromDate, toDate: toDate, selectedDept: selectedDept })
+        body: JSON.stringify({ fromDate: fromDate, toDate: toDate, selectedDept: selectedDept, selectedLocation: selectedLocation })  // Include selected location
     })
     .then(response => response.json())
     .then(data => {
@@ -274,7 +292,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         var headerRow = document.createElement('tr');
         var columns;
         if (selectedDept === 'ALL') {
-            columns = ['TIME', 'DATE', 'POWER_GENERATION', 'LOAD_SECH_SMS2', 'LOAD_SECH_SMS3', 'LOAD_SECH_SMS_TOTAL', 'LOAD_SECH_RAILMILL', 'LOAD_SECH_PLATEMILL', 'LOAD_SECH_SPM', 'LOAD_SECH_NSPL', 'TOTAL'];
+            columns = ['TIME', 'DATE', 'POWER_GENERATION', 'LOAD_SECH_SMS2', 'LOAD_SECH_SMS3', 'LOAD_SECH_SMS_TOTAL', 'LOAD_SECH_RAILMILL', 'LOAD_SECH_PLATEMILL', 'LOAD_SECH_SPM', 'LOAD_SECH_NSPL', 'TOTAL', 'LOCATION'];
         } else if (selectedDept === 'JLDC') {
             columns = ['TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
         } else if (selectedDept === 'SMS') {
@@ -294,13 +312,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Create table body
         var tbody = document.createElement('tbody');
         data.forEach(row => {
-            var tr = document.createElement('tr');
-            columns.forEach(col => {
-                var td = document.createElement('td');
-                td.textContent = row[col];
-                tr.appendChild(td);
-            });
-            tbody.appendChild(tr);
+            if (row['LOCATION'] === selectedLocation) {  // Filter rows based on selected location
+                var tr = document.createElement('tr');
+                columns.forEach(col => {
+                    var td = document.createElement('td');
+                    td.textContent = row[col];
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            }
         });
         table.appendChild(tbody);
 

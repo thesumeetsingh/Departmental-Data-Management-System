@@ -12,6 +12,7 @@ if (!isset($_SESSION['username'])) {
 $userName = $_SESSION['username'];
 $userEmail = $_SESSION['useremail'];
 $department = $_SESSION['dept'];
+$userLocation=$_SESSION['userLocation'];
 $deptTitle=strtoupper($department);
 
 if ($department == 'ADMIN') {
@@ -58,8 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Prepare and execute the query
     $columnString = implode(", ", $columns);
-    $stmt = $conn->prepare("SELECT $columnString FROM $tableName WHERE DATE BETWEEN ? AND ? ORDER BY DATE,TIME ASC");
-    $stmt->bind_param("ss", $fromDate, $toDate);
+    $stmt = $conn->prepare("SELECT $columnString FROM $tableName WHERE DATE BETWEEN ? AND ? AND LOCATION = ? ORDER BY DATE,TIME ASC");
+    $stmt->bind_param("sss", $fromDate, $toDate, $userLocation);
     $stmt->execute();
     $result = $stmt->get_result();
 

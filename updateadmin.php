@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data'])) {
             $loadSechSMSTotal = $loadSechSMS2 + $loadSechSMS3;
             $total = $loadSechSMS2 + $loadSechSMS3 + $loadSechRailMill + $loadSechPlateMill + $loadSechSPM + $loadSechNSPL;
 
-            $checkQuery = "SELECT * FROM power_table WHERE DATE = '$date' AND TIME = '$time'";
+            $checkQuery = "SELECT * FROM power_table WHERE DATE = '$date' AND TIME = '$time' and LOCATION='$location'";
             $checkResult = $conn->query($checkQuery);
 
             if ($checkResult->num_rows > 0) {
@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data'])) {
                                 UPDATEDBY = '$updatingUser',
                                 UPDATED_ON = '$currentDateTime',
                                 LOCATION = '$location'
-                                WHERE DATE = '$date' AND TIME = '$time'";
+                                WHERE DATE = '$date' AND TIME = '$time' AND LOCATION='$location'";
                 if ($conn->query($updateQuery) !== TRUE) {
                     echo "Error updating record: " . $conn->error;
                 }
@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data'])) {
             $tables = ['JLDC', 'NSPL', 'SMS', 'SPM', 'RAILMILL', 'PLATEMILL'];
             foreach ($tables as $table) {
                 if ($table == 'SMS') {
-                    $checkTableQuery = "SELECT * FROM $table WHERE DATE = '$date' AND TIME = '$time'";
+                    $checkTableQuery = "SELECT * FROM $table WHERE DATE = '$date' AND TIME = '$time' AND LOCATION='$location'";
                     $checkTableResult = $conn->query($checkTableQuery);
 
                     if ($checkTableResult->num_rows > 0) {
@@ -88,9 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data'])) {
                                         LOADSECH_SMS2 = '$loadSechSMS2',
                                         LOADSECH_SMS3 = '$loadSechSMS3',
                                         UPDATEDBY = '$updatingUser',
-                                        UPDATED_ON = '$currentDateTime',
-                                        LOCATION = '$location'
-                                        WHERE DATE = '$date' AND TIME = '$time'";
+                                        UPDATED_ON = '$currentDateTime'
+                                        WHERE DATE = '$date' AND TIME = '$time' AND LOCATION='$location'";
                         if ($conn->query($updateTableQuery) !== TRUE) {
                             echo "Error updating record: " . $conn->error;
                         }
@@ -105,16 +104,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data'])) {
                     $loadSechColumn = ($table == 'JLDC') ? 'POWER_GENERATION' : 'LOADSECH';
                     $deptValue = ($table == 'JLDC') ? $powerGeneration : (($table == 'NSPL') ? $loadSechNSPL : (($table == 'SPM') ? $loadSechSPM : (($table == 'RAILMILL') ? $loadSechRailMill : $loadSechPlateMill)));
 
-                    $checkTableQuery = "SELECT * FROM $table WHERE DATE = '$date' AND TIME = '$time'";
+                    $checkTableQuery = "SELECT * FROM $table WHERE DATE = '$date' AND TIME = '$time' AND LOCATION='$location'";
                     $checkTableResult = $conn->query($checkTableQuery);
 
                     if ($checkTableResult->num_rows > 0) {
                         $updateTableQuery = "UPDATE $table SET 
                                         $loadSechColumn = '$deptValue',
                                         UPDATEDBY = '$updatingUser',
-                                        UPDATED_ON = '$currentDateTime',
-                                        LOCATION = '$location'
-                                        WHERE DATE = '$date' AND TIME = '$time'";
+                                        UPDATED_ON = '$currentDateTime'
+                                        WHERE DATE = '$date' AND TIME = '$time' AND LOCATION='$location'";
                         if ($conn->query($updateTableQuery) !== TRUE) {
                             echo "Error updating record: " . $conn->error;
                         }
