@@ -18,6 +18,7 @@ $userName = $_SESSION['username'];
 $department = $_SESSION['dept'];
 $deptTitle=strtoupper($department);
 $userEmail = $_SESSION['useremail'];
+$userLocation = $_SESSION['userLocation'];
 include 'connection.php';
 date_default_timezone_set('Asia/Kolkata');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -214,17 +215,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="container-fluid mb-3">
     <div class="row align-items-end">
         <div class="col-auto">
-            <label for="locationSelect" class="form-label"><b> Location:</b></label>
-            <select class="form-select" id="locationSelect">
-                <option value="" selected disabled>Select Location</option>
-                <option value="ANGUL">ANGUL</option>
-                <option value="RAIGARH">RAIGARH</option>
-                <option value="PATRATU">PATRATU</option>
-                <option value="TAMNAR">TAMNAR</option>
-                <option value="NALWA">NALWA</option>
-            </select>
-        </div>
-        <div class="col-auto">
             <label for="sheetDate" class="form-label"><b>Select Sheet Date:</b></label>
             <input type="date" class="form-control" id="sheetDate">
         </div>
@@ -293,11 +283,7 @@ function validateColumns(columns, department) {
         }
 document.getElementById('updateDatabaseBtn').addEventListener('click', function() {
     var sheetDate = document.getElementById('sheetDate').value;
-    var location = document.getElementById('locationSelect').value;
-    if (!location) {
-        alert('Please select a location.');
-        return;
-    }
+    var location = "<?php echo $userLocation; ?>";
     if (!sheetDate) {
         alert('Please select a sheet date.');
         return;
