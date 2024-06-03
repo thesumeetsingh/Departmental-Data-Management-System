@@ -30,9 +30,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Password is correct, retrieve email and department
             $email = $user['EMAILADD'];
             $dept = $user['DEPT'];
+            $userLocation=$user['USERLOCATION'];
             $_SESSION['username'] = $username;
             $_SESSION['useremail'] = $email;
             $_SESSION['dept'] = $dept;
+            $_SESSION['userLocation']=$userLocation;
             
             // Redirect based on user's department and role
             if ($dept == 'ADMIN') {
