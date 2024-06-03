@@ -176,7 +176,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card mb-2" style="background: rgb(177,176,160); background: linear-gradient(90deg, rgba(177,176,160,1) 0%, rgba(236,177,109,1) 100%); border: none;">
                     <div class="card-body d-flex justify-content-end gap-2">
                         <!-- Option 2 Button -->
+                        <button type="button" class="btn btn-dark" id="clearSelection">Clear Selection</button>
                         <button type="button" class="btn btn-dark" id="option2Btn">Update Database</button>
+
                     </div>
                 </div>
             </div>
@@ -334,6 +336,16 @@ document.getElementById('searchBtn').addEventListener('click', function() {
         alert('Error fetching data from database!');
     });
 });
+document.getElementById('clearSelection').addEventListener('click', function() {
+            var inputs = document.querySelectorAll('input');
+            inputs.forEach(function(input) {
+                input.value = '';
+            });
+            var clearDept=document.querySelector('#selectedDept');
+            clearDept.value="ALL";
+            var clearLoc=document.querySelector('#selectLocation');
+            clearLoc.value="";
+        });
 
     </script>
 </body>

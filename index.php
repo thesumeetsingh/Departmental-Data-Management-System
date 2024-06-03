@@ -208,6 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card mb-2" style="background: rgb(177,176,160); background: linear-gradient(90deg, rgba(177,176,160,1) 0%, rgba(236,177,109,1) 100%); border: none;">
                     <div class="card-body d-flex justify-content-end gap-2">
 
+                        <button class='btn btn-dark' id="clearSelection">Clear Selection</button>
                         <button class='btn btn-dark' id="downloadSample">Download Sample</button>
                         <button class='btn btn-dark' id="toViewDeptTable">View Database</button>
                     </div>
@@ -370,6 +371,13 @@ document.getElementById('updateDatabaseBtn').addEventListener('click', function(
                 alert('No sample sheet available for the selected department.');
             }
         });
+        document.getElementById('clearSelection').addEventListener('click', function() {
+            var inputs = document.querySelectorAll('input');
+            inputs.forEach(function(input) {
+                input.value = '';
+            });
+});
+
     </script>
 </body>
 

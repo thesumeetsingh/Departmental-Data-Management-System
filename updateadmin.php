@@ -219,7 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['data'])) {
             <div class="row">
                 <div class="card mb-2" style="background: rgb(177,176,160); background: linear-gradient(90deg, rgba(177,176,160,1) 0%, rgba(236,177,109,1) 100%); border: none;">
                     <div class="card-body d-flex justify-content-end gap-2">
-
+                    <button type="button" class="btn btn-dark" id="clearSelection">Clear Selection</button>
 			<button class='btn btn-dark' id="downloadSample">Download Sample</button>
                         <!-- Export to Excel button -->
                         <button type="button" class="btn btn-dark" id="toViewDB">View Database</button>
@@ -415,6 +415,14 @@ function updateCalculatedValues() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        });
+
+        document.getElementById('clearSelection').addEventListener('click', function() {
+            var clearDate= document.querySelector('input');
+            clearDate.value=";"
+            var clearLoc = document.querySelector('#locationSelect');
+            clearLoc.value="";
+
         });
     </script>
 </body>
