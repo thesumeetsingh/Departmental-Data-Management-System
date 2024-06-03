@@ -38,15 +38,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $loadsechColumn = ($department === 'JLDC') ? 'POWER_GENERATION' : 'LOADSECH';
 	
-            $checkDeptSql = "SELECT * FROM $department WHERE DATE='$sheetDate' AND TIME='$time'";
+            $checkDeptSql = "SELECT * FROM $department WHERE DATE='$sheetDate' AND TIME='$time' AND LOCATION='$location'";
             $checkDeptResult = $conn->query($checkDeptSql);
 	
             if ($checkDeptResult->num_rows > 0) {
                 if ($department === 'SMS') {
                     $departmentValue2 = sanitizeValue($row[2]);
-                    $deptSql = "UPDATE $department SET LOADSECH_SMS2='$departmentValue', LOADSECH_SMS3='$departmentValue2', UPDATEDBY='$updatinguser', UPDATED_ON='$currentDateTime', LOCATION='$location' WHERE DATE='$sheetDate' AND TIME='$time'";
+                    $deptSql = "UPDATE $department SET LOADSECH_SMS2='$departmentValue', LOADSECH_SMS3='$departmentValue2', UPDATEDBY='$updatinguser', UPDATED_ON='$currentDateTime' WHERE DATE='$sheetDate' AND TIME='$time' AND LOCATION='$location' ";
                 } else {
-                    $deptSql = "UPDATE $department SET $loadsechColumn='$departmentValue', UPDATEDBY='$updatinguser', UPDATED_ON='$currentDateTime', LOCATION='$location' WHERE DATE='$sheetDate' AND TIME='$time'";
+                    $deptSql = "UPDATE $department SET $loadsechColumn='$departmentValue', UPDATEDBY='$updatinguser', UPDATED_ON='$currentDateTime' WHERE DATE='$sheetDate' AND TIME='$time' AND LOCATION='$location' ";
                 }
             } else {
                 if ($department === 'SMS') {
@@ -64,15 +64,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($department === 'SMS') {
-                $checkSqlSMS = "SELECT * FROM power_table WHERE DATE='$sheetDate' AND TIME='$time'";
+                $checkSqlSMS = "SELECT * FROM power_table WHERE DATE='$sheetDate' AND TIME='$time' AND LOCATION='$location' ";
                 $checkResultSMS = $conn->query($checkSqlSMS);
                 if ($checkResultSMS->num_rows > 0) {
-                    $updateSqlSMS = "UPDATE power_table SET LOAD_SECH_SMS2='$departmentValue', LOAD_SECH_SMS3='$departmentValue2' WHERE DATE='$sheetDate' AND TIME='$time'";
+                    $updateSqlSMS = "UPDATE power_table SET LOAD_SECH_SMS2='$departmentValue', LOAD_SECH_SMS3='$departmentValue2' WHERE DATE='$sheetDate' AND TIME='$time' AND LOCATION='$location' ";
                     if ($conn->query($updateSqlSMS) !== TRUE) {
                         echo "Error updating power_table for SMS: " . $conn->error;
                     }
                 } else {
-                    $insertSqlSMS = "INSERT INTO power_table (DATE, TIME, LOAD_SECH_SMS2, LOAD_SECH_SMS3) VALUES ('$sheetDate', '$time', '$departmentValue', '$departmentValue2')";
+                    $insertSqlSMS = "INSERT INTO power_table (DATE, TIME, LOAD_SECH_SMS2, LOAD_SECH_SMS3, LOCATION) VALUES ('$sheetDate', '$time', '$departmentValue', '$departmentValue2','$location')";
                     if ($conn->query($insertSqlSMS) !== TRUE) {
                         echo "Error inserting into power_table for SMS: " . $conn->error;
                     }
@@ -101,15 +101,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if (!empty($powerColumn)) {
-                $checkSql = "SELECT * FROM power_table WHERE DATE='$sheetDate' AND TIME='$time'";
+                $checkSql = "SELECT * FROM power_table WHERE DATE='$sheetDate' AND TIME='$time' AND LOCATION='$location'";
                 $checkResult = $conn->query($checkSql);
                 if ($checkResult->num_rows > 0) {
-                    $updateSql = "UPDATE power_table SET $powerColumn='$departmentValue' WHERE DATE='$sheetDate' AND TIME='$time'";
+                    $updateSql = "UPDATE power_table SET $powerColumn='$departmentValue' WHERE DATE='$sheetDate' AND TIME='$time' AND LOCATION='$location' ";
                     if ($conn->query($updateSql) !== TRUE) {
                         echo "Error updating power_table: " . $conn->error;
                     }
                 } else {
-                    $insertSql = "INSERT INTO power_table (DATE, TIME, $powerColumn) VALUES ('$sheetDate', '$time', '$departmentValue')";
+                    $insertSql = "INSERT INTO power_table (DATE, TIME, $powerColumn, LOCATION) VALUES ('$sheetDate', '$time', '$departmentValue', '$location')";
                     if ($conn->query($insertSql) !== TRUE) {
                         echo "Error inserting into power_table: " . $conn->error;
                     }
