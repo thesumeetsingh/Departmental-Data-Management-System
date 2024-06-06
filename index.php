@@ -373,6 +373,8 @@ document.getElementById('updateDatabaseBtn').addEventListener('click', function(
         });
         document.getElementById('clearSelection').addEventListener('click', function() {
             var inputs = document.querySelectorAll('input');
+            var tableContainer = document.getElementById('myTable');
+            tableContainer.innerHTML = '';
             inputs.forEach(function(input) {
                 input.value = '';
             });

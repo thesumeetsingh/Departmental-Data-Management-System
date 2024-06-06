@@ -285,6 +285,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         });
         document.getElementById('clearSelection').addEventListener('click', function() {
             var inputs = document.querySelectorAll('input');
+            var tableContainer = document.getElementById('myTable');
+            tableContainer.innerHTML = '';
             inputs.forEach(function(input) {
                 input.value = '';
             });

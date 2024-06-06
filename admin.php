@@ -375,6 +375,8 @@ document.getElementById('clearSelection').addEventListener('click', function() {
             clearDept.value="ALL";
             var clearLoc=document.querySelector('#selectLocation');
             clearLoc.value="";
+            var tableContainer = document.getElementById('myTable');
+            tableContainer.innerHTML = '';
         });
 
     </script>    

@@ -419,9 +419,11 @@ function updateCalculatedValues() {
 
         document.getElementById('clearSelection').addEventListener('click', function() {
             var clearDate= document.querySelector('input');
-            clearDate.value=";"
+            clearDate.value="";
             var clearLoc = document.querySelector('#locationSelect');
             clearLoc.value="";
+            var tableContainer = document.getElementById('myTable');
+            tableContainer.innerHTML = '';
 
         });
     </script>
