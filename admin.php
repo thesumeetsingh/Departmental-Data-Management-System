@@ -142,6 +142,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 8px;
         }
 
+        #myTable {
+            position: relative;
+            height: 60vh; /* Adjust the height as needed */
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            background-color: #fff;
+            z-index: 1;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+            white-space: nowrap; /* Prevents text wrapping */
+        }
+        tbody tr {
+    background-color: #fff; /* Ensures the rows have a background */
+}
+
     </style>
 </head>
 
@@ -220,7 +248,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <button type="button" class="btn btn-primary" style=" width:20px;" id="searchBtn"><i class="fa fa-search"></i></button>
                     <button type="button" class="btn btn-dark" style=" width:200px;"id="exportBtn"> <i class="fa fa-file-excel-o" aria-hidden="true"></i>Export to Excel </button>
                 </div>
-                <div class="card" id="myTable" style="padding: 20px; height:61vh; overflow-y: auto; margin-top:20px;">
+                <div class="card" id="myTable" style=" height:61vh; overflow-y: auto; margin-top:20px;">
                     <!-- Table to display results will be inserted here -->
                 </div>
             </div>
@@ -252,11 +280,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         });
 
         // Handle click on Search button
-document.getElementById('searchBtn').addEventListener('click', function() {
+        document.getElementById('searchBtn').addEventListener('click', function() {
     var fromDate = document.getElementById('fromDate').value;
     var toDate = document.getElementById('toDate').value;
     var selectedDept = document.getElementById('selectedDept').value;
-    var selectedLocation = document.getElementById('selectLocation').value;  // Get the selected location
+    var selectedLocation = document.getElementById('selectLocation').value;
 
     if (!fromDate || !toDate) {
         alert('Select both From Date and To Date.');
@@ -276,7 +304,7 @@ document.getElementById('searchBtn').addEventListener('click', function() {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ fromDate: fromDate, toDate: toDate, selectedDept: selectedDept, selectedLocation: selectedLocation })  // Include selected location
+        body: JSON.stringify({ fromDate: fromDate, toDate: toDate, selectedDept: selectedDept, selectedLocation: selectedLocation })
     })
     .then(response => response.json())
     .then(data => {
@@ -294,13 +322,13 @@ document.getElementById('searchBtn').addEventListener('click', function() {
         var headerRow = document.createElement('tr');
         var columns;
         if (selectedDept === 'ALL') {
-            columns = ['TIME', 'DATE', 'POWER_GENERATION', 'LOAD_SECH_SMS2', 'LOAD_SECH_SMS3', 'LOAD_SECH_SMS_TOTAL', 'LOAD_SECH_RAILMILL', 'LOAD_SECH_PLATEMILL', 'LOAD_SECH_SPM', 'LOAD_SECH_NSPL', 'TOTAL', 'LOCATION'];
+            columns = ['Sr No.', 'TIME', 'DATE', 'POWER_GENERATION', 'LOAD_SECH_SMS2', 'LOAD_SECH_SMS3', 'LOAD_SECH_SMS_TOTAL', 'LOAD_SECH_RAILMILL', 'LOAD_SECH_PLATEMILL', 'LOAD_SECH_SPM', 'LOAD_SECH_NSPL', 'TOTAL', 'LOCATION'];
         } else if (selectedDept === 'JLDC') {
-            columns = ['TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+            columns = ['Sr No.', 'TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
         } else if (selectedDept === 'SMS') {
-            columns = ['TIME', 'DATE', 'LOADSECH_SMS2', 'LOADSECH_SMS3', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+            columns = ['Sr No.', 'TIME', 'DATE', 'LOADSECH_SMS2', 'LOADSECH_SMS3', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
         } else {
-            columns = ['TIME', 'DATE', 'LOADSECH', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+            columns = ['Sr No.', 'TIME', 'DATE', 'LOADSECH', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
         }
 
         columns.forEach(col => {
@@ -313,16 +341,17 @@ document.getElementById('searchBtn').addEventListener('click', function() {
 
         // Create table body
         var tbody = document.createElement('tbody');
-        data.forEach(row => {
-            if (row['LOCATION'] === selectedLocation) {  // Filter rows based on selected location
-                var tr = document.createElement('tr');
-                columns.forEach(col => {
-                    var td = document.createElement('td');
-                    td.textContent = row[col];
-                    tr.appendChild(td);
-                });
-                tbody.appendChild(tr);
-            }
+        data.forEach((row, index) => {
+            var tr = document.createElement('tr');
+            var serialNumberCell = document.createElement('td');
+            serialNumberCell.textContent = index + 1; // Serial number starts from 1
+            tr.appendChild(serialNumberCell);
+            columns.slice(1).forEach(col => {
+                var td = document.createElement('td');
+                td.textContent = row[col];
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
         });
         table.appendChild(tbody);
 
@@ -336,6 +365,7 @@ document.getElementById('searchBtn').addEventListener('click', function() {
         alert('Error fetching data from database!');
     });
 });
+
 document.getElementById('clearSelection').addEventListener('click', function() {
             var inputs = document.querySelectorAll('input');
             inputs.forEach(function(input) {
@@ -347,7 +377,7 @@ document.getElementById('clearSelection').addEventListener('click', function() {
             clearLoc.value="";
         });
 
-    </script>
+    </script>    
 </body>
 
 </html>

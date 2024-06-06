@@ -100,9 +100,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             visibility: hidden;
             width: 0;
         }
-        #myTable{
+        #myTable {
+            position: relative;
+            height: 60vh; /* Adjust the height as needed */
+            overflow-y: auto;
             text-align:center;
         }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            background-color: #fff;
+            z-index: 1;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+            white-space: nowrap; /* Prevents text wrapping */
+        }
+        tbody tr {
+    background-color: #fff; /* Ensures the rows have a background */
+}
     </style>
 </head>
 
@@ -154,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <button type="button" class="btn btn-primary mt-4" id="searchBtn"><i class="fa fa-search"></i></button>
                     <button type="button" class="btn btn-dark mt-4" id="exportBtn"><i class="fa fa-file-excel-o" aria-hidden="true"></i>Export to Excel </button>
                 </div>                
-                <div class="card" id="myTable" style="padding: 20px; height:61vh; overflow-y: auto; margin-top:20px;">
+                <div class="card" id="myTable" style=" height:61vh; overflow-y: auto; margin-top:20px;">
                     <!-- Table to display results will be inserted here -->
                 </div>
             </div>
@@ -218,11 +243,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 var department = '<?php echo $department; ?>';
                 var columns;
                 if (department === 'JLDC') {
-                    columns = ['TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+                    columns = ['Sr No.','TIME', 'DATE', 'POWER_GENERATION', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
                 } else if (department === 'SMS') {
-                    columns = ['TIME', 'DATE', 'LOADSECH_SMS2','LOADSECH_SMS3', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+                    columns = ['Sr No.','TIME', 'DATE', 'LOADSECH_SMS2','LOADSECH_SMS3', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
                 } else {
-                    columns = ['TIME', 'DATE', 'LOADSECH', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
+                    columns = ['Sr No.','TIME', 'DATE', 'LOADSECH', 'UPDATEDBY', 'UPDATED_ON', 'LOCATION'];
                 }
                 columns.forEach(col => {
                     var th = document.createElement('th');
@@ -234,9 +259,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // table body
                 var tbody = document.createElement('tbody');
-                data.forEach(row => {
+                data.forEach((row,index) => {
                     var tr = document.createElement('tr');
-                    columns.forEach(col => {
+                    var serialNumberCell=document.createElement('td');
+                    serialNumberCell.textContent=index+1;
+                    tr.appendChild(serialNumberCell);
+                    columns.slice(1).forEach(col => {
                         var td = document.createElement('td');
                         td.textContent = row[col];
                         tr.appendChild(td);
