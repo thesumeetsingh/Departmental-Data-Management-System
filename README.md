@@ -35,6 +35,14 @@ The Departmental Data Management System (DDMS) is a full-stack web application d
 - `forgot-password.php`: Allows user to enter their email and sends a secure token link to that user's email address for limited time period.
 - `create-password.php`: User creates new password with secure hashing.
 
+  
+## Other Files
+- `connection.php`: necessary variables for connection to the database.
+- `suppressError.php`: to suppress unnecessary warnings.
+- `process-password.php`: to change the updated password in database.
+- `mailer.php`:contains necessary keys and values needed for email sending and email body.
+- `send-password-request`: sends email to user with link.
+- `logout.php`: code to logout user from website.
 
 ## Database Schema
 - `userdetails`: Stores sign-up data of all users.
