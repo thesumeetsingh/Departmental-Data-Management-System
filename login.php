@@ -146,6 +146,9 @@ $conn->close();
                                             <span class="checkmark"></span>
                                         </label>
                                     </div>
+                                    <div class="w-50 text-md-right">
+										<a href="forgot-password.php">Forgot Password</a>
+									</div>
                                     
                                 </div>
                             </form>
