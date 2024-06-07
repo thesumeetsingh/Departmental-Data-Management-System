@@ -22,6 +22,8 @@ The Departmental Data Management System (DDMS) is a full-stack web application d
 
 - **Excel File Handling:**
   - User-friendly interface to upload and view data.
+- **Reset Password**
+  - Sends reset password link with special token for limited time to ensure security in resetting passwords.
 
 ## Web Pages
 - `signup.php`: Allows employees to register with their personal and departmental details.
@@ -30,6 +32,7 @@ The Departmental Data Management System (DDMS) is a full-stack web application d
 - `depttable.php`: View uploaded data specific to the employee's department.
 - `admin.php`: Admin interface to view data across all departments.
 - `updateadmin.php`: Allows the admin to update data for any department.
+
 
 ## Database Schema
 - `userdetails`: Stores sign-up data of all users.
