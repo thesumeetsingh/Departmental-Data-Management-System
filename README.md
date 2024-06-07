@@ -53,6 +53,7 @@ The Departmental Data Management System (DDMS) is a full-stack web application d
 - **Session Management:** PHP sessions for secure login.
 - **Hashing:** Password hashing is used to ensure security.
 - **Gmail SMTP:** Gmail's smtp server is used to send email to user for resetting passwords.
+- **PHPMailer:** Used to send email to user.
 
 ## Setup Instructions
 1. Clone the repository:
