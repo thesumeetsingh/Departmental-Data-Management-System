@@ -26,7 +26,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($result->num_rows > 0) {
         // Username exists, check password
         $user = $result->fetch_assoc();
-        if ($password == $user['PASSWORD']) {
+        $hashedPassword = $user['PASSWORD'];
+        if (password_verify($password, $hashedPassword)) {
             // Password is correct, retrieve email and department
             $email = $user['EMAILADD'];
             $dept = $user['DEPT'];

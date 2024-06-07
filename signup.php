@@ -28,9 +28,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo '<script>window.location.href = "signup.php";</script>';
         exit; // Stop further execution after redirection
     } else {
+        $hashedPassword=password_hash($password, PASSWORD_DEFAULT);
         // Insert user details into the database
         $stmt = $conn->prepare("INSERT INTO user_details (FIRSTNAME, LASTNAME, USERNAME, PASSWORD, EMAILADD, PHONENUMBER, AGE, GENDER, DEPT, USERLOCATION) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?)");
-        $stmt->bind_param("ssssssisss", $firstName, $lastName, $username, $password, $email, $phone, $age, $gender, $department, $userLocation); // Added department binding
+        $stmt->bind_param("ssssssisss", $firstName, $lastName, $username, $hashedPassword, $email, $phone, $age, $gender, $department, $userLocation); // Added department binding
         
         if ($stmt->execute()) {
             echo '<script>alert("User registered successfully.");</script>';
