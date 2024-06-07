@@ -32,6 +32,8 @@ The Departmental Data Management System (DDMS) is a full-stack web application d
 - `depttable.php`: View uploaded data specific to the employee's department.
 - `admin.php`: Admin interface to view data across all departments.
 - `updateadmin.php`: Allows the admin to update data for any department.
+- `forgot-password`: Allows user to enter their email and sends a secure token link to that user's email address for limited time period.
+- `create-password`: User creates new password with secure hashing.
 
 
 ## Database Schema
