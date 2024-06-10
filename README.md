@@ -22,6 +22,8 @@ The Departmental Data Management System (DDMS) is a full-stack web application d
 
 - **Excel File Handling:**
   - User-friendly interface to upload and view data.
+- **Reset Password**
+  - Sends reset password link with special token for limited time to ensure security in resetting passwords.
 
 ## Web Pages
 - `signup.php`: Allows employees to register with their personal and departmental details.
@@ -30,6 +32,17 @@ The Departmental Data Management System (DDMS) is a full-stack web application d
 - `depttable.php`: View uploaded data specific to the employee's department.
 - `admin.php`: Admin interface to view data across all departments.
 - `updateadmin.php`: Allows the admin to update data for any department.
+- `forgot-password.php`: Allows user to enter their email and sends a secure token link to that user's email address for limited time period.
+- `create-password.php`: User creates new password with secure hashing.
+
+  
+## Other Files
+- `connection.php`: necessary variables for connection to the database.
+- `suppressError.php`: to suppress unnecessary warnings.
+- `process-password.php`: to change the updated password in database.
+- `mailer.php`:contains necessary keys and values needed for email sending and email body.
+- `send-password-request`: sends email to user with link.
+- `logout.php`: code to logout user from website.
 
 ## Database Schema
 - `userdetails`: Stores sign-up data of all users.
@@ -45,7 +58,10 @@ The Departmental Data Management System (DDMS) is a full-stack web application d
 - **Frontend:** HTML, CSS, JavaScript
 - **Backend:** PHP
 - **Database:** MySQL
-- **Session Management:** PHP sessions for secure login
+- **Session Management:** PHP sessions for secure login.
+- **Hashing:** Password hashing is used to ensure security.
+- **Gmail SMTP:** Gmail's smtp server is used to send email to user for resetting passwords.
+- **PHPMailer:** Used to send email to user.
 
 ## Setup Instructions
 1. Clone the repository:
